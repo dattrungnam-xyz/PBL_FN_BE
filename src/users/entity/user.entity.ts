@@ -5,10 +5,14 @@ import {
   DeleteDateColumn,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Role } from '../../common/type/role.type';
 import { RefreshToken } from './refreshToken.entity';
+import { Seller } from '../../sellers/entity/seller.entity';
+import { Order } from '../../orders/entity/order.entity';
+import { Cart } from '../../carts/entity/cart.entity';
 
 @Entity()
 export class User {
@@ -40,14 +44,6 @@ export class User {
   @Column({ nullable: true, length: 11 })
   phone: string;
 
-  @Expose()
-  @Column({ nullable: true })
-  targetScore: number;
-
-  @Expose()
-  @Column({ nullable: true })
-  testDate: Date;
-
   @Exclude({ toPlainOnly: true })
   @Column({ nullable: true })
   password: string;
@@ -60,10 +56,6 @@ export class User {
   @Column({ nullable: true })
   passwordResetToken: String;
 
-  // @Exclude({ toPlainOnly: true })
-  // @Column('simple-array', { nullable: true })
-  // refreshToken: string[];
-
   @Exclude({ toPlainOnly: true })
   @Column({ nullable: true })
   passwordResetExpires: Date;
@@ -71,6 +63,9 @@ export class User {
   @Column('simple-array')
   roles: Role[];
 
+  @Column({ default: true })
+  isActive: boolean;
+  
   @Expose()
   @CreateDateColumn()
   createdAt: Date;
@@ -83,7 +78,13 @@ export class User {
     nullable: true,
   })
   refreshTokens: RefreshToken[];
-  @Expose()
-  @Column({ default: true })
-  isActive: boolean;
+
+  @OneToOne(() => Seller, (seller) => seller.user, { nullable: true })
+  seller: Seller;
+
+  @OneToMany(() => Order, (order) => order.user)
+  orders: Order[];
+
+  @OneToMany(() => Cart, (cart) => cart.user)
+  carts: Cart[];
 }
