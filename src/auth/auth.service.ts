@@ -112,6 +112,7 @@ export class AuthService {
     return this.userRepository.save(
       new User({
         ...createUserDTO,
+        roles: [Role.USER],
         password: await this.hashPassword(createUserDTO.password),
       }),
     );
