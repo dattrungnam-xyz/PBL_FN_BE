@@ -33,7 +33,15 @@ export class Seller {
 
   @Expose()
   @Column({ nullable: true })
+  email: string;
+
+  @Expose()
+  @Column({ nullable: true })
   avatar: string;
+
+  @Expose()
+  @Column({ nullable: true })
+  banner: string;
 
   @Expose()
   @Column({ type: 'longtext', nullable: true })
@@ -41,15 +49,20 @@ export class Seller {
 
   @Expose()
   @Column({ type: 'longtext', nullable: true })
-  location: string;
+  address: string;
 
   @Expose()
   @Column({ nullable: true })
-  longitude: number;
+  province: string;
 
   @Expose()
   @Column({ nullable: true })
-  latitude: number;
+  district: string;
+
+  @Expose()
+  @Column({ nullable: true })
+  ward: string;
+  
 
   @Expose()
   @CreateDateColumn()

@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBase64,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+  ValidateIf,
+} from 'class-validator';
 
 export class CreateSellerDTO {
   @IsNotEmpty()
@@ -11,13 +19,41 @@ export class CreateSellerDTO {
 
   @IsNotEmpty()
   @IsString()
-  location: string;
+  phone: string;
+
+  @IsNotEmpty()
+  @IsString()
+  email: string;
 
   @IsOptional()
-  @IsNumber()
-  longitude: number;
+  @IsString()
+  @ValidateIf((o) => o.avatar !== '')
+  @Matches(/^data:image\/(png|jpg|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/, {
+    message: 'Avatar must be a valid Base64 encoded image',
+  })
+  avatar: string;
 
   @IsOptional()
-  @IsNumber()
-  latitude: number;
+  @IsString()
+  @ValidateIf((o) => o.banner !== '')
+  @Matches(/^data:image\/(png|jpg|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/, {
+    message: 'Banner must be a valid Base64 encoded image',
+  })
+  banner: string;
+
+  @IsOptional()
+  @IsString()
+  address: string;
+
+  @IsOptional()
+  @IsString()
+  province: string;
+
+  @IsOptional()
+  @IsString()
+  district: string;
+
+  @IsOptional()
+  @IsString()
+  ward: string;
 }
