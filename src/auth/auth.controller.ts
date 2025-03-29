@@ -78,9 +78,9 @@ export class AuthController {
   @UseInterceptors(ClassSerializerInterceptor)
   async resetPassword(
     @Param('token') token: string,
-    @Body() resetPassworDTO: ResetPasswordDTO,
+    @Body() resetPasswordDTO: ResetPasswordDTO,
   ) {
-    return await this.authService.resetPassword(token, resetPassworDTO);
+    return await this.authService.resetPassword(token, resetPasswordDTO);
   }
 
   @Patch('updatePassword')

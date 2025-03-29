@@ -1,5 +1,15 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Min,
+} from 'class-validator';
+import { CategoryType } from '../../common/type/category.type';
+import { SellProductType } from '../../common/type/sellProduct.type';
 export class CreateProductDTO {
   @IsNotEmpty()
   @IsString()
@@ -9,19 +19,28 @@ export class CreateProductDTO {
   @IsString()
   description: string;
 
-  @IsOptional()
-  @IsString()
-  details: string;
-
-  @IsOptional()
-  @IsString()
-  usageInstructions: string;
-
-  @IsOptional()
-  @IsString()
-  storageInstructions: string;
+  @IsNotEmpty()
+  @IsNumber()
+  @IsPositive()
+  @Min(0)
+  price: number;
 
   @IsNotEmpty()
   @IsNumber()
-  price: number;
+  @IsPositive()
+  @Min(0)
+  quantity: number;
+
+  @IsNotEmpty()
+  @IsEnum(CategoryType)
+  category: CategoryType;
+
+  @IsNotEmpty()
+  @IsEnum(SellProductType)
+  status: SellProductType;
+
+  @IsNotEmpty()
+  @IsArray()
+  @IsString({ each: true })
+  images: string[];
 }

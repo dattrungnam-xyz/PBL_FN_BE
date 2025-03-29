@@ -9,7 +9,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Product } from '../../products/entity/product.entity';
-import { ReviewMedia } from '../../review-media/entity/reviewMedia.entity';
 
 @Entity()
 export class Review {
@@ -40,6 +39,7 @@ export class Review {
   @ManyToOne(() => Product, (product) => product.reviews)
   product: Product;
 
-  @OneToMany(()=> ReviewMedia, (media) => media.review)
-  media: ReviewMedia[];
+  @Expose()
+  @Column({ type: 'json', nullable: true })
+  media: string[];
 }

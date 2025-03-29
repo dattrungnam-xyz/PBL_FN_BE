@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -6,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,8 +20,8 @@ import { Roles } from '../common/decorator/role.decorator';
 import { CurrentUser } from '../common/decorator/currentUser.decorator';
 import { User } from '../users/entity/user.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-@Controller('sellers')
 
+@Controller('sellers')
 export class SellersController {
   constructor(
     private readonly sellersService: SellersService,
@@ -34,16 +36,14 @@ export class SellersController {
     @CurrentUser() user: User,
   ) {
     if (createSellerDto.avatar) {
-      const image = await this.cloudinaryService.uploadImageBase64(
-        createSellerDto.avatar,
-      );
-      createSellerDto.avatar = image.url;
+      createSellerDto.avatar = (
+        await this.cloudinaryService.uploadImageBase64(createSellerDto.avatar)
+      ).url;
     }
     if (createSellerDto.banner) {
-      const image = await this.cloudinaryService.uploadImageBase64(
-        createSellerDto.banner,
-      );
-      createSellerDto.banner = image.url;
+      createSellerDto.banner = (
+        await this.cloudinaryService.uploadImageBase64(createSellerDto.banner)
+      ).url;
     }
     return this.sellersService.create(createSellerDto, user);
   }
@@ -54,16 +54,44 @@ export class SellersController {
     return this.sellersService.update(id, updateSellerDto);
   }
 
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.ADMIN)
+  getSellers() {
+    return this.sellersService.getSellers();
+  }
+
+  @Get('user')
+  @UseGuards(JwtAuthGuard)
+  getSellerByUser(@CurrentUser() user: User) {
+    if (!user.storeId) {
+      throw new BadRequestException('User not have store');
+    }
+    return this.sellersService.getSellerById(user.storeId);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   getSellerById(@Param('id') id: string) {
     return this.sellersService.getSellerById(id);
   }
 
-  @Get()
+  @Put()
   @UseGuards(JwtAuthGuard)
-  @Roles(Role.ADMIN)
-  getSellers() {
-    return this.sellersService.getSellers();
+  async updateSeller(
+    @Body() updateSellerDto: UpdateSellerDTO,
+    @CurrentUser() user: User,
+  ) {
+    if (updateSellerDto.avatar && !updateSellerDto.avatar.startsWith('http')) {
+      updateSellerDto.avatar = (
+        await this.cloudinaryService.uploadImageBase64(updateSellerDto.avatar)
+      ).url;
+    }
+    if (updateSellerDto.banner && !updateSellerDto.banner.startsWith('http')) {
+      updateSellerDto.banner = (
+        await this.cloudinaryService.uploadImageBase64(updateSellerDto.banner)
+      ).url;
+    }
+    return this.sellersService.update(user.storeId, updateSellerDto);
   }
 }

@@ -12,7 +12,6 @@ export class SellersService {
     @InjectRepository(Seller)
     private sellerRepository: Repository<Seller>,
   ) {}
-
   async create(createSellerDto: CreateSellerDTO, user: User) {
     const seller = this.sellerRepository.create({
       ...createSellerDto,
@@ -29,19 +28,21 @@ export class SellersService {
     return this.sellerRepository.save({ ...seller, ...updateSellerDto });
   }
 
-  async getSellerByUserId(userId: string) {
-    const seller = await this.sellerRepository.findOne({
+  getSellerByUserId(userId: string) {
+    return this.sellerRepository.findOne({
       where: { user: { id: userId } },
     });
-    return seller;
   }
 
-  async getSellerById(id: string) {
-    const seller = await this.sellerRepository.findOne({ where: { id } });
-    return seller;
+  getSellerById(id: string) {
+    return this.sellerRepository.findOne({ where: { id } });
   }
 
-  async getSellers() {
+  getSellers() {
     return this.sellerRepository.find();
+  }
+
+  getSellerByStoreId(storeId: string) {
+    return this.sellerRepository.findOne({ where: { id: storeId } });
   }
 }

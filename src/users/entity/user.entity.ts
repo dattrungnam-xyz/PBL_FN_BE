@@ -87,4 +87,6 @@ export class User {
 
   @OneToMany(() => Cart, (cart) => cart.user)
   carts: Cart[];
+
+  storeId: string;
 }

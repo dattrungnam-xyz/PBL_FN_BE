@@ -27,7 +27,7 @@ export class CreateSellerDTO {
 
   @IsOptional()
   @IsString()
-  @ValidateIf((o) => o.avatar !== '')
+  @ValidateIf((o) => o.avatar !== '' && !o.avatar.startsWith('http'))
   @Matches(/^data:image\/(png|jpg|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/, {
     message: 'Avatar must be a valid Base64 encoded image',
   })
@@ -35,7 +35,7 @@ export class CreateSellerDTO {
 
   @IsOptional()
   @IsString()
-  @ValidateIf((o) => o.banner !== '')
+  @ValidateIf((o) => o.banner !== '' && !o.banner.startsWith('http'))
   @Matches(/^data:image\/(png|jpg|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/, {
     message: 'Banner must be a valid Base64 encoded image',
   })

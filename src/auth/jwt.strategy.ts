@@ -18,12 +18,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    let user = await this.userRepository.findOneBy({
-      id: payload.id,
+    let user = await this.userRepository.findOne({
+      where: { id: payload.id },
+      relations: ['seller'],
     });
     if (!user.isActive) {
       throw new ForbiddenException('Your account is not active');
     }
+    user.storeId = user?.seller?.id;
     return user;
   }
 }

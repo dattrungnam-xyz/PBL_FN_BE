@@ -10,10 +10,12 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Seller } from '../../sellers/entity/seller.entity';
-import { Category } from '../../categories/entity/category.entity';
 import { Review } from '../../reviews/entity/review.entity';
-import { ProductMedia } from '../../product-media/entity/productMedia.entity';
 import { Cart } from '../../carts/entity/cart.entity';
+import { CategoryType } from '../../common/type/category.type';
+import { SellProductType } from '../../common/type/sellProduct.type';
+import { Paginated } from '../../pagination/paginator';
+import { VerifyOCOPStatus } from '../../common/type/verifyOCOP.type';
 
 @Entity()
 export class Product {
@@ -34,20 +36,24 @@ export class Product {
   description: string;
 
   @Expose()
-  @Column({ type: 'longtext', nullable: true })
-  details: string;
+  @Column()
+  price: number;
 
   @Expose()
-  @Column({ type: 'longtext', nullable: true })
-  usageInstructions: string;
+  @Column({ type: 'enum', enum: CategoryType, default: CategoryType.FOOD })
+  category: CategoryType;
 
   @Expose()
-  @Column({ type: 'longtext', nullable: true })
-  storageInstructions: string;
+  @Column({
+    type: 'enum',
+    enum: SellProductType,
+    default: SellProductType.SELLING,
+  })
+  status: SellProductType;
 
   @Expose()
   @Column()
-  price: number;
+  quantity: number;
 
   @Expose()
   @CreateDateColumn()
@@ -57,18 +63,26 @@ export class Product {
   @DeleteDateColumn({ nullable: true })
   deletedAt: Date;
 
-  @ManyToOne(() => Category, (category) => category.products)
-  category: Category;
-
   @ManyToOne(() => Seller, (seller) => seller.products)
   seller: Seller;
 
-  @OneToMany(() => ProductMedia, (productImage) => productImage.product)
-  images: ProductMedia[];
+  @Expose()
+  @Column({ type: 'json', nullable: true })
+  images: string[];
 
   @OneToMany(() => Review, (review) => review.product)
   reviews: Review[];
 
   @ManyToMany(() => Cart, (cart) => cart.products)
   carts: Cart[];
+
+  @Expose()
+  @Column({
+    type: 'enum',
+    enum: VerifyOCOPStatus,
+    default: VerifyOCOPStatus.NOT_SUBMITTED,
+  })
+  verifyOcopStatus: VerifyOCOPStatus;
 }
+
+export class PaginatedProduct extends Paginated<Product>(Product) {}
