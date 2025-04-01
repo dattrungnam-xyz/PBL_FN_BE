@@ -13,6 +13,7 @@ import { RefreshToken } from './refreshToken.entity';
 import { Seller } from '../../sellers/entity/seller.entity';
 import { Order } from '../../orders/entity/order.entity';
 import { Cart } from '../../carts/entity/cart.entity';
+import { Review } from '../../reviews/entity/review.entity';
 
 @Entity()
 export class User {
@@ -65,7 +66,7 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
-  
+
   @Expose()
   @CreateDateColumn()
   createdAt: Date;
@@ -87,6 +88,9 @@ export class User {
 
   @OneToMany(() => Cart, (cart) => cart.user)
   carts: Cart[];
+
+  @OneToMany(() => Review, (review) => review.user)
+  reviews: Review[];
 
   storeId: string;
 }

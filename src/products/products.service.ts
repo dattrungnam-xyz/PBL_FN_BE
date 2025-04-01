@@ -7,7 +7,7 @@ import { CreateProductDTO } from './dto/createProduct.dto';
 import { UpdateProductDTO } from './dto/updateProduct.dto';
 import { PaginatedProduct, Product } from './entity/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CategoryType } from '../common/type/category.type';
 import { SellProductType } from '../common/type/sellProduct.type';
 import { SellersService } from '../sellers/sellers.service';
@@ -43,7 +43,7 @@ export class ProductsService {
   }
 
   async deleteProduct(id: string) {
-    const result = await this.productRepository.delete(id);
+    const result = await this.productRepository.softDelete(id);
     if (result.affected === 0) {
       throw new NotFoundException('Product not found');
     }
@@ -58,6 +58,13 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
     return product;
+  }
+
+  async getProductsByIds(ids: string[]) {
+    return this.productRepository.find({
+      where: { id: In(ids) },
+      relations: ['seller'],
+    });
   }
 
   async getProductsBySellerId(

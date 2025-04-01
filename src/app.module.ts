@@ -19,6 +19,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { OrderDetailsModule } from './order-details/order-details.module';
 import { SellersModule } from './sellers/sellers.module';
 import { CartsModule } from './carts/carts.module';
+import { VerifyModule } from './verify/verify.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -37,6 +38,7 @@ import { CartsModule } from './carts/carts.module';
     OrderDetailsModule,
     SellersModule,
     CartsModule,
+    VerifyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

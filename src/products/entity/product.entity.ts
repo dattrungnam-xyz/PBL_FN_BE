@@ -16,7 +16,7 @@ import { CategoryType } from '../../common/type/category.type';
 import { SellProductType } from '../../common/type/sellProduct.type';
 import { Paginated } from '../../pagination/paginator';
 import { VerifyOCOPStatus } from '../../common/type/verifyOCOP.type';
-
+import { Verify } from '../../verify/entity/verify.entity'; 
 @Entity()
 export class Product {
   constructor(partial?: Partial<Product>) {
@@ -83,6 +83,9 @@ export class Product {
     default: VerifyOCOPStatus.NOT_SUBMITTED,
   })
   verifyOcopStatus: VerifyOCOPStatus;
+
+  @ManyToMany(() => Verify, (verify) => verify.products)
+  verify: Verify[];
 }
 
 export class PaginatedProduct extends Paginated<Product>(Product) {}

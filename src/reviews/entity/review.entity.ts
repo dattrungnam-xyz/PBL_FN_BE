@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Product } from '../../products/entity/product.entity';
-
+import { User } from '../../users/entity/user.entity';    
 @Entity()
 export class Review {
   constructor(partial?: Partial<Review>) {
@@ -42,4 +42,7 @@ export class Review {
   @Expose()
   @Column({ type: 'json', nullable: true })
   media: string[];
+
+  @ManyToOne(() => User, (user) => user.reviews)
+  user: User;
 }
