@@ -25,7 +25,10 @@ import { UpdateRoleDTO } from './input/updateRole.dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Patch('updateProfile')
   @UseGuards(JwtAuthGuard)
@@ -120,5 +123,12 @@ export class UsersController {
     @Body() updateRoleDTO: UpdateRoleDTO,
   ) {
     return await this.usersService.updateRole(id, updateRoleDTO);
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getProfile(@CurrentUser() user: User) {
+    return user;
   }
 }

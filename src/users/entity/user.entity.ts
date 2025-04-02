@@ -14,7 +14,7 @@ import { Seller } from '../../sellers/entity/seller.entity';
 import { Order } from '../../orders/entity/order.entity';
 import { Cart } from '../../carts/entity/cart.entity';
 import { Review } from '../../reviews/entity/review.entity';
-
+import { UserAddress } from '../../user-address/entity/userAddress.entity';
 @Entity()
 export class User {
   constructor(partial?: Partial<User>) {
@@ -86,11 +86,14 @@ export class User {
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
 
-  @OneToMany(() => Cart, (cart) => cart.user)
-  carts: Cart[];
+  @OneToOne(() => Cart, (cart) => cart.user)
+  cart: Cart;
 
   @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
+
+  @OneToMany(() => UserAddress, (userAddress) => userAddress.user)
+  addresses: UserAddress[];
 
   storeId: string;
 }

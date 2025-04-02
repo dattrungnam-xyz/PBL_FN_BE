@@ -11,12 +11,12 @@ import {
 } from 'typeorm';
 import { Seller } from '../../sellers/entity/seller.entity';
 import { Review } from '../../reviews/entity/review.entity';
-import { Cart } from '../../carts/entity/cart.entity';
 import { CategoryType } from '../../common/type/category.type';
 import { SellProductType } from '../../common/type/sellProduct.type';
 import { Paginated } from '../../pagination/paginator';
 import { VerifyOCOPStatus } from '../../common/type/verifyOCOP.type';
-import { Verify } from '../../verify/entity/verify.entity'; 
+import { Verify } from '../../verify/entity/verify.entity';
+import { CartItems } from '../../cart-items/entity/cartItems.entity';
 @Entity()
 export class Product {
   constructor(partial?: Partial<Product>) {
@@ -73,9 +73,6 @@ export class Product {
   @OneToMany(() => Review, (review) => review.product)
   reviews: Review[];
 
-  @ManyToMany(() => Cart, (cart) => cart.products)
-  carts: Cart[];
-
   @Expose()
   @Column({
     type: 'enum',
@@ -83,6 +80,9 @@ export class Product {
     default: VerifyOCOPStatus.NOT_SUBMITTED,
   })
   verifyOcopStatus: VerifyOCOPStatus;
+
+  @OneToMany(() => CartItems, (cartItem) => cartItem.product)
+  cartItems: CartItems[];
 
   @ManyToMany(() => Verify, (verify) => verify.products)
   verify: Verify[];

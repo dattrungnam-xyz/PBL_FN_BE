@@ -20,6 +20,8 @@ import { OrderDetailsModule } from './order-details/order-details.module';
 import { SellersModule } from './sellers/sellers.module';
 import { CartsModule } from './carts/carts.module';
 import { VerifyModule } from './verify/verify.module';
+import { UserAddressModule } from './user-address/user-address.module';
+import { CartItemsModule } from './cart-items/cart-items.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -39,6 +41,8 @@ import { VerifyModule } from './verify/verify.module';
     SellersModule,
     CartsModule,
     VerifyModule,
+    UserAddressModule,
+    CartItemsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

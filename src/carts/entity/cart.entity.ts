@@ -8,11 +8,12 @@ import {
   ManyToMany,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Product } from '../../products/entity/product.entity';
 import { User } from '../../users/entity/user.entity';
-
+import { CartItems } from '../../cart-items/entity/cartItems.entity';
 @Entity()
 export class Cart {
   constructor(partial?: Partial<Cart>) {
@@ -23,16 +24,11 @@ export class Cart {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @JoinTable()
-  @ManyToMany(() => Product, (product) => product.carts)
-  products: Product[];
-
-  @ManyToOne(() => User, (user) => user.carts)
+  @OneToOne(() => User, (user) => user.cart)
   user: User;
 
-  @Expose()
-  @Column()
-  quantity: number;
+  @OneToMany(() => CartItems, (cartItem) => cartItem.cart, { cascade: true })
+  items: CartItems[];
 
   @Expose()
   @CreateDateColumn()
