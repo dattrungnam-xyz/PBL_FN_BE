@@ -61,4 +61,7 @@ export class UserAddressService {
       where: { id, user: { id: userId } },
     });
   }
+  async findOneById(id: string) {
+    return this.userAddressRepository.findOne({ where: { id } });
+  }
 }

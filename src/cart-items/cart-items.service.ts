@@ -33,4 +33,14 @@ export class CartItemsService {
     cartItem.quantity = body.quantity;
     return this.cartItemsRepository.save(cartItem);
   }
+
+  async deleteCartItemByUserIdAndProductId(userId: string, productId: string) {
+    const cartItem = await this.cartItemsRepository.findOne({
+      where: { cart: { user: { id: userId } }, product: { id: productId } },
+    });
+    if (!cartItem) {
+      throw new NotFoundException('Cart item not found');
+    }
+    await this.cartItemsRepository.softDelete(cartItem.id);
+  }
 }

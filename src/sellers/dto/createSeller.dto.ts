@@ -51,9 +51,21 @@ export class CreateSellerDTO {
 
   @IsOptional()
   @IsString()
+  provinceName: string;
+
+  @IsOptional()
+  @IsString()
   district: string;
 
   @IsOptional()
   @IsString()
+  districtName: string;
+
+  @IsOptional()
+  @IsString()
   ward: string;
+
+  @IsOptional()
+  @IsString()
+  wardName: string;
 }

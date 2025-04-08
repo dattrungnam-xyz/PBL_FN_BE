@@ -4,9 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
+  JoinColumn,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -25,6 +23,7 @@ export class Cart {
   id: string;
 
   @OneToOne(() => User, (user) => user.cart)
+  @JoinColumn()
   user: User;
 
   @OneToMany(() => CartItems, (cartItem) => cartItem.cart, { cascade: true })

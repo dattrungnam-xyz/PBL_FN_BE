@@ -17,6 +17,7 @@ import { Paginated } from '../../pagination/paginator';
 import { VerifyOCOPStatus } from '../../common/type/verifyOCOP.type';
 import { Verify } from '../../verify/entity/verify.entity';
 import { CartItems } from '../../cart-items/entity/cartItems.entity';
+import { OrderDetail } from '../../order-details/entity/orderDetail.entity';
 @Entity()
 export class Product {
   constructor(partial?: Partial<Product>) {
@@ -38,6 +39,10 @@ export class Product {
   @Expose()
   @Column()
   price: number;
+
+  @Expose()
+  @Column()
+  star: number;
 
   @Expose()
   @Column({ type: 'enum', enum: CategoryType, default: CategoryType.FOOD })
@@ -86,6 +91,9 @@ export class Product {
 
   @ManyToMany(() => Verify, (verify) => verify.products)
   verify: Verify[];
+
+  @OneToMany(() => OrderDetail, (orderDetail) => orderDetail.product)
+  orderDetails: OrderDetail[];
 }
 
 export class PaginatedProduct extends Paginated<Product>(Product) {}

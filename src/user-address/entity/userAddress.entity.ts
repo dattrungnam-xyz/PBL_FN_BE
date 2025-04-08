@@ -7,9 +7,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from '../../users/entity/user.entity';
 import { UserAddressType } from '../../common/type/userAddress.type';
+import { Order } from '../../orders/entity/order.entity';
 
 @Entity()
 export class UserAddress {
@@ -71,4 +73,7 @@ export class UserAddress {
   @Expose()
   @DeleteDateColumn({ nullable: true })
   deletedAt: Date;
+
+  @OneToMany(() => Order, (order) => order.address)
+  orders: Order[];
 }

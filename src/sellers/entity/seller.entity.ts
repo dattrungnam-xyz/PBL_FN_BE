@@ -57,12 +57,23 @@ export class Seller {
 
   @Expose()
   @Column({ nullable: true })
+  provinceName: string;
+
+  @Expose()
+  @Column({ nullable: true })
   district: string;
 
   @Expose()
   @Column({ nullable: true })
+  districtName: string;
+
+  @Expose()
+  @Column({ nullable: true })
   ward: string;
-  
+
+  @Expose()
+  @Column({ nullable: true })
+  wardName: string;
 
   @Expose()
   @CreateDateColumn()

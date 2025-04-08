@@ -4,12 +4,13 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  JoinColumn,
 } from 'typeorm';
 import { PaymentMethodType } from '../../common/type/paymentMethod.type';
 import { Order } from '../../orders/entity/order.entity';
+import { PaymentStatusType } from '../../common/type/paymentStatus.type';
 
 @Entity()
 export class Payment {
@@ -31,6 +32,14 @@ export class Payment {
 
   @Expose()
   @Column({
+    type: 'enum',
+    enum: PaymentStatusType,
+    default: PaymentStatusType.UNPAID,
+  })
+  paymentStatus: PaymentStatusType;
+
+  @Expose()
+  @Column({
     nullable: true,
   })
   transactionId: string;
@@ -43,6 +52,7 @@ export class Payment {
   @DeleteDateColumn({ nullable: true })
   deletedAt: Date;
 
+  @JoinColumn()
   @OneToOne(() => Order, (order) => order.payment)
   order: Order;
 }

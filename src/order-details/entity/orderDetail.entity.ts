@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Order } from '../../orders/entity/order.entity';
-
+import { Product } from '../../products/entity/product.entity';
 @Entity()
 export class OrderDetail {
   constructor(partial?: Partial<OrderDetail>) {
@@ -37,4 +37,7 @@ export class OrderDetail {
 
   @ManyToOne(() => Order, (order) => order.orderDetails)
   order: Order;
+
+  @ManyToOne(() => Product, (product) => product.orderDetails)
+  product: Product;
 }

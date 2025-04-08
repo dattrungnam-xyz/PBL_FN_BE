@@ -10,9 +10,9 @@ import {
   Min,
   Max,
   IsOptional,
-  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsImage } from '../../common/validation/IsImage.constraint';
 
 export class CreateVerifyDTO {
   @IsNotEmpty()
@@ -42,14 +42,7 @@ export class CreateVerifyDTO {
   @IsOptional()
   @IsArray()
   @ValidateIf((o) => o.images && o.images.length > 0)
-  @Matches(
-    /^(data:image\/(png|jpg|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+|https?:\/\/[^\s/$.?#].[^\s]*\.(png|jpg|jpeg|gif|webp))$/,
-    {
-      message:
-        'Images must be either a valid Base64 encoded image or a valid image URL',
-      each: true,
-    },
-  )
+  @IsImage({ each: true })
   @MaxLength(5000000, { message: 'Each image must not exceed 5MB', each: true })
   images?: string[];
 }

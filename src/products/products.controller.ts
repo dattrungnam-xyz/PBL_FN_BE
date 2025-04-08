@@ -21,8 +21,10 @@ import { User } from '../users/entity/user.entity';
 import { CategoryType } from '../common/type/category.type';
 import { SellProductType } from '../common/type/sellProduct.type';
 import { VerifyOCOPStatus } from '../common/type/verifyOCOP.type';
+import { ClassSerializerInterceptor, UseInterceptors } from '@nestjs/common';
 
 @Controller('products')
+@UseInterceptors(ClassSerializerInterceptor)
 export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,

@@ -9,9 +9,11 @@ import {
   Matches,
   Min,
   ValidateIf,
+  Max,
 } from 'class-validator';
 import { CategoryType } from '../../common/type/category.type';
 import { SellProductType } from '../../common/type/sellProduct.type';
+import { IsImage } from '../../common/validation/IsImage.constraint';
 export class CreateProductDTO {
   @IsNotEmpty()
   @IsString()
@@ -34,6 +36,13 @@ export class CreateProductDTO {
   quantity: number;
 
   @IsNotEmpty()
+  @IsNumber()
+  @IsPositive()
+  @Min(0)
+  @Max(5)
+  star: number;
+
+  @IsNotEmpty()
   @IsEnum(CategoryType)
   category: CategoryType;
 
@@ -44,9 +53,6 @@ export class CreateProductDTO {
   @IsNotEmpty()
   @IsArray()
   @ValidateIf((o) => o.images && o.images.length > 0)
-  @Matches(/^data:image\/(png|jpg|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/, {
-    message: 'Images must be a valid Base64 encoded image',
-    each: true,
-  })
+  @IsImage({ each: true })
   images: string[];
 }
