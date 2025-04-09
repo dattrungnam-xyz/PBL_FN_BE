@@ -28,6 +28,10 @@ export class OrderDetailsService {
       userId,
       createOrderDetailDTO.productId,
     );
+    await this.productService.updateProductQuantity(
+      orderDetail.product.id,
+      orderDetail.product.quantity - orderDetail.quantity,
+    );
 
     return this.orderDetailRepository.save(orderDetail);
   }

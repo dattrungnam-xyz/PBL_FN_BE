@@ -124,4 +124,13 @@ export class ProductsService {
   async getProductsByStatus(status: SellProductType) {
     return this.productRepository.find({ where: { status } });
   }
+
+  async updateProductQuantity(id: string, quantity: number) {
+    const product = await this.getProductById(id);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    product.quantity = quantity;
+    return this.productRepository.save(product);
+  }
 }

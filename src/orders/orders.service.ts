@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Order, PaginatedOrder } from './entity/order.entity';
 import { CreateOrderDTO } from './dto/createOrder.dto';
 import { OrderStatusType } from '../common/type/orderStatus.type';
@@ -20,6 +20,8 @@ import { PaginatedProduct } from '../products/entity/product.entity';
 import { paginate } from '../pagination/paginator';
 import { Brackets } from 'typeorm';
 import { UpdateOrderStatusDTO } from './dto/updateOrderStatus.dto';
+import { UpdateOrdersStatusDTO } from './dto/updateOrdersStatus.dto';
+import { RejectOrderDTO } from './dto/rejectOrder.dto';
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
 export class OrdersService {
@@ -36,7 +38,7 @@ export class OrdersService {
   async createOrder(userId: string, createOrderDTO: CreateOrderDTO) {
     const order = new Order();
     order.totalPrice = createOrderDTO.totalPrice;
-    order.orderStatus = OrderStatusType.PENDING;
+    order.orderStatus = OrderStatusType.PENDING_PAYMENT;
     order.shippingFee = createOrderDTO.shippingFee;
     order.note = createOrderDTO.note;
     const user = await this.userService.findOneById(userId);
@@ -176,8 +178,68 @@ export class OrdersService {
     if (!order) {
       throw new NotFoundException('Order not found');
     }
+    if (
+      updateOrderStatusDTO.status === OrderStatusType.REQUIRE_CANCEL &&
+      order.orderStatus !== OrderStatusType.PENDING_PAYMENT &&
+      order.orderStatus !== OrderStatusType.PENDING
+    ) {
+      throw new BadRequestException(
+        'Cannot cancel order that is not pending payment or pending',
+      );
+    }
+    if (
+      updateOrderStatusDTO.status === OrderStatusType.REQUIRE_REFUND &&
+      order.orderStatus !== OrderStatusType.COMPLETED &&
+      order.orderStatus !== OrderStatusType.SHIPPING
+    ) {
+      throw new BadRequestException(
+        'Cannot refund order that is not completed or shipping',
+      );
+    }
 
     order.orderStatus = updateOrderStatusDTO.status;
+    return this.orderRepository.save(order);
+  }
+
+  async updateOrdersStatus(updateOrdersStatusDTO: UpdateOrdersStatusDTO) {
+    const orders = await this.orderRepository.find({
+      where: { id: In(updateOrdersStatusDTO.orderIds) },
+    });
+    orders.forEach((order) => {
+      if (updateOrdersStatusDTO.status === OrderStatusType.REQUIRE_CANCEL) {
+        if (
+          order.orderStatus !== OrderStatusType.PENDING_PAYMENT &&
+          order.orderStatus !== OrderStatusType.PENDING
+        ) {
+          throw new BadRequestException(
+            'Cannot cancel order that is not pending payment or pending',
+          );
+        }
+      }
+      if (updateOrdersStatusDTO.status === OrderStatusType.REQUIRE_REFUND) {
+        if (
+          order.orderStatus !== OrderStatusType.COMPLETED &&
+          order.orderStatus !== OrderStatusType.SHIPPING
+        ) {
+          throw new BadRequestException(
+            'Cannot refund order that is not completed or shipping',
+          );
+        }
+      }
+      order.orderStatus = updateOrdersStatusDTO.status;
+    });
+    return this.orderRepository.save(orders);
+  }
+
+  async rejectOrder(id: string, rejectOrderDTO: RejectOrderDTO) {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    order.rejectReason = rejectOrderDTO.reason;
+    order.orderStatus = OrderStatusType.REJECTED;
     return this.orderRepository.save(order);
   }
 }

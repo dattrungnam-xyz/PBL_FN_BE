@@ -8,4 +8,5 @@ export enum OrderStatusType {
   CANCELLED = 'cancelled',
   REFUNDED = 'refunded',
   REQUIRE_REFUND = 'require_refund',
+  REJECTED = 'rejected',
 }

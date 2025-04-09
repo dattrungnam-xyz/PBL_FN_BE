@@ -18,6 +18,11 @@ import { CurrentUser } from '../common/decorator/currentUser.decorator';
 import { OrderStatusType } from '../common/type/orderStatus.type';
 import { ClassSerializerInterceptor, UseInterceptors } from '@nestjs/common';
 import { UpdateOrderStatusDTO } from './dto/updateOrderStatus.dto';
+import { UpdateOrdersStatusDTO } from './dto/updateOrdersStatus.dto';
+import { Role } from '../common/type/role.type';
+import { Roles } from '../common/decorator/role.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { RejectOrderDTO } from './dto/rejectOrder.dto';
 @Controller('orders')
 @UseInterceptors(ClassSerializerInterceptor)
 export class OrdersController {
@@ -48,7 +53,7 @@ export class OrdersController {
     @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('search') search?: string,
-    @Query('status') status?: OrderStatusType,
+    @Query('orderStatus') status?: OrderStatusType,
     @Query('province') province?: string,
     @Query('district') district?: string,
     @Query('ward') ward?: string,
@@ -68,6 +73,16 @@ export class OrdersController {
     });
   }
 
+  @Patch('status')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async updateOrdersStatus(
+    @CurrentUser() user: User,
+    @Body() updateOrdersStatusDTO: UpdateOrdersStatusDTO,
+  ) {
+    return this.ordersService.updateOrdersStatus(updateOrdersStatusDTO);
+  }
+
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard)
   async updateOrderStatus(
@@ -75,5 +90,14 @@ export class OrdersController {
     @Body() updateOrderStatusDTO: UpdateOrderStatusDTO,
   ) {
     return this.ordersService.updateOrderStatus(id, updateOrderStatusDTO);
+  }
+
+  @Patch(':id/reject/')
+  @UseGuards(JwtAuthGuard)
+  async rejectOrder(
+    @Param('id') id: string,
+    @Body() rejectOrderDTO: RejectOrderDTO,
+  ) {
+    return this.ordersService.rejectOrder(id, rejectOrderDTO);
   }
 }

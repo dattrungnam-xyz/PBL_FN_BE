@@ -41,6 +41,18 @@ export class Order {
   note: string;
 
   @Expose()
+  @Column({ type: 'longtext', nullable: true })
+  cancelReason: string;
+
+  @Expose()
+  @Column({ type: 'longtext', nullable: true })
+  refundReason: string;
+
+  @Expose()
+  @Column({ type: 'longtext', nullable: true })
+  rejectReason: string;
+
+  @Expose()
   @Column({
     type: 'enum',
     enum: OrderStatusType,
