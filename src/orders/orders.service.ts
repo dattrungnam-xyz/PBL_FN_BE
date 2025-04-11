@@ -22,6 +22,9 @@ import { Brackets } from 'typeorm';
 import { UpdateOrderStatusDTO } from './dto/updateOrderStatus.dto';
 import { UpdateOrdersStatusDTO } from './dto/updateOrdersStatus.dto';
 import { RejectOrderDTO } from './dto/rejectOrder.dto';
+import { RequestCancelDTO } from './dto/requestCancel.dto';
+import { RequestRefundDTO } from './dto/requestRefund.dto';
+import { ProductsService } from '../products/products.service';
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
 export class OrdersService {
@@ -33,6 +36,7 @@ export class OrdersService {
     private readonly sellerService: SellersService,
     private readonly paymentService: PaymentsService,
     private readonly orderDetailService: OrderDetailsService,
+    private readonly productService: ProductsService,
   ) {}
 
   async createOrder(userId: string, createOrderDTO: CreateOrderDTO) {
@@ -240,6 +244,110 @@ export class OrdersService {
     }
     order.rejectReason = rejectOrderDTO.reason;
     order.orderStatus = OrderStatusType.REJECTED;
+    return this.orderRepository.save(order);
+  }
+
+  async requestCancel(id: string, requestCancelDTO: RequestCancelDTO) {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+      relations: ['orderDetails', 'orderDetails.product'],
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    if (
+      order.orderStatus !== OrderStatusType.PENDING &&
+      order.orderStatus !== OrderStatusType.PENDING_PAYMENT
+    ) {
+      throw new BadRequestException(
+        'Cannot cancel order that is not pending or pending payment',
+      );
+    }
+    order.cancelReason = requestCancelDTO.cancelReason;
+
+    if (order.orderStatus === OrderStatusType.PENDING_PAYMENT) {
+      order.orderStatus = OrderStatusType.CANCELLED;
+      order.orderDetails.forEach(async (orderDetail) => {
+        const product = await this.productService.getProductById(
+          orderDetail.product.id,
+        );
+        product.quantity += orderDetail.quantity;
+        await this.productService.updateProductQuantity(
+          product.id,
+          product.quantity,
+        );
+      });
+    } else {
+      order.orderStatus = OrderStatusType.REQUIRE_CANCEL;
+    }
+
+    return this.orderRepository.save(order);
+  }
+
+  async requestRefund(id: string, requestRefundDTO: RequestRefundDTO) {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    if (
+      order.orderStatus !== OrderStatusType.COMPLETED &&
+      order.orderStatus !== OrderStatusType.SHIPPING
+    ) {
+      throw new BadRequestException(
+        'Cannot refund order that is not completed or shipping',
+      );
+    }
+    order.refundReason = requestRefundDTO.refundReason;
+    order.refundReasonImage = requestRefundDTO.refundReasonImage;
+    order.orderStatus = OrderStatusType.REQUIRE_REFUND;
+    return this.orderRepository.save(order);
+  }
+
+  async acceptCancel(id: string) {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+      relations: ['orderDetails', 'orderDetails.product'],
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    order.orderStatus = OrderStatusType.CANCELLED;
+    order.orderDetails.forEach(async (orderDetail) => {
+      const product = await this.productService.getProductById(
+        orderDetail.product.id,
+      );
+      product.quantity += orderDetail.quantity;
+      await this.productService.updateProductQuantity(
+        product.id,
+        product.quantity,
+      );
+    });
+    return this.orderRepository.save(order);
+  }
+
+  async acceptRefund(id: string) {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    order.orderStatus = OrderStatusType.REFUNDED;
+    //TODO: Refund money to user
+    return this.orderRepository.save(order);
+  }
+
+  async rejectRefund(id: string, reason: string) {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    order.orderStatus = OrderStatusType.REJECTED;
+    order.rejectReason = reason;
     return this.orderRepository.save(order);
   }
 }

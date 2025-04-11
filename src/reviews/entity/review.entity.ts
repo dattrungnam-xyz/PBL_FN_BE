@@ -4,12 +4,15 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Product } from '../../products/entity/product.entity';
-import { User } from '../../users/entity/user.entity';    
+import { User } from '../../users/entity/user.entity';
+import { OrderDetail } from '../../order-details/entity/orderDetail.entity';
 @Entity()
 export class Review {
   constructor(partial?: Partial<Review>) {
@@ -45,4 +48,8 @@ export class Review {
 
   @ManyToOne(() => User, (user) => user.reviews)
   user: User;
+
+  @OneToOne(() => OrderDetail, (orderDetail) => orderDetail.review)
+  @JoinColumn()
+  orderDetail: OrderDetail;
 }

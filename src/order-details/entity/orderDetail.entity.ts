@@ -5,10 +5,12 @@ import {
   DeleteDateColumn,
   Entity,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Order } from '../../orders/entity/order.entity';
 import { Product } from '../../products/entity/product.entity';
+import { Review } from '../../reviews/entity/review.entity';
 @Entity()
 export class OrderDetail {
   constructor(partial?: Partial<OrderDetail>) {
@@ -40,4 +42,7 @@ export class OrderDetail {
 
   @ManyToOne(() => Product, (product) => product.orderDetails)
   product: Product;
+
+  @OneToOne(() => Review, (review) => review.orderDetail)
+  review: Review;
 }

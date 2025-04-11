@@ -49,6 +49,10 @@ export class Order {
   refundReason: string;
 
   @Expose()
+  @Column({ type: 'json', nullable: true })
+  refundReasonImage: string[];
+
+  @Expose()
   @Column({ type: 'longtext', nullable: true })
   rejectReason: string;
 

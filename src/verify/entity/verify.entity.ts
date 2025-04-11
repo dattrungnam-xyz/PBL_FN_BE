@@ -15,7 +15,6 @@ import { VerifyOCOPStatus } from '../../common/type/verifyOCOP.type';
 import { Product } from '../../products/entity/product.entity';
 import { Paginated } from '../../pagination/paginator';
 
-
 @Entity()
 export class Verify {
   constructor(partial?: Partial<Verify>) {
@@ -49,6 +48,10 @@ export class Verify {
   @Expose()
   @Column()
   verifyDate: Date;
+
+  @Expose()
+  @Column({ nullable: true, type: 'longtext' })
+  rejectReason: string;
 
   @Expose()
   @Column({ type: 'json', nullable: true })

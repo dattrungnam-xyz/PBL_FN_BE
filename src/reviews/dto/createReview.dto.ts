@@ -7,6 +7,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { IsImage } from '../../common/validation/IsImage.constraint';
 
 export class CreateReviewDTO {
   @IsNotEmpty()
@@ -21,6 +22,10 @@ export class CreateReviewDTO {
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsImage({ each: true })
   media: string[];
+
+  @IsNotEmpty()
+  @IsString()
+  orderDetailId: string;
 }

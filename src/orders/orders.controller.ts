@@ -23,10 +23,16 @@ import { Role } from '../common/type/role.type';
 import { Roles } from '../common/decorator/role.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { RejectOrderDTO } from './dto/rejectOrder.dto';
+import { RequestRefundDTO } from './dto/requestRefund.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { RequestCancelDTO } from './dto/requestCancel.dto';
 @Controller('orders')
 @UseInterceptors(ClassSerializerInterceptor)
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -99,5 +105,54 @@ export class OrdersController {
     @Body() rejectOrderDTO: RejectOrderDTO,
   ) {
     return this.ordersService.rejectOrder(id, rejectOrderDTO);
+  }
+
+  @Patch(':id/request-refund/')
+  @UseGuards(JwtAuthGuard)
+  async requestRefund(
+    @Param('id') id: string,
+    @Body() requestRefundDTO: RequestRefundDTO,
+  ) {
+    if (requestRefundDTO.refundReasonImage) {
+      const uploadedImages = await Promise.all(
+        requestRefundDTO.refundReasonImage.map((image) =>
+          this.cloudinaryService.uploadImageBase64(image),
+        ),
+      );
+      requestRefundDTO.refundReasonImage = uploadedImages.map(
+        (image) => image.url,
+      );
+    }
+    return this.ordersService.requestRefund(id, requestRefundDTO);
+  }
+
+  @Patch(':id/request-cancel/')
+  @UseGuards(JwtAuthGuard)
+  async requestCancel(
+    @Param('id') id: string,
+    @Body() requestCancelDTO: RequestCancelDTO,
+  ) {
+    return this.ordersService.requestCancel(id, requestCancelDTO);
+  }
+
+  @Patch(':id/accept-cancel/')
+  @UseGuards(JwtAuthGuard)
+  async acceptCancel(@Param('id') id: string) {
+    return this.ordersService.acceptCancel(id);
+  }
+
+  @Patch(':id/accept-refund/')
+  @UseGuards(JwtAuthGuard)
+  async acceptRefund(@Param('id') id: string) {
+    return this.ordersService.acceptRefund(id);
+  }
+
+  @Patch(':id/reject-refund/')
+  @UseGuards(JwtAuthGuard)
+  async rejectRefund(
+    @Param('id') id: string,
+    @Body() rejectRefundDTO: { reason: string },
+  ) {
+    return this.ordersService.rejectRefund(id, rejectRefundDTO.reason);
   }
 }

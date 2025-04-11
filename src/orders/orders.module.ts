@@ -9,6 +9,8 @@ import { SellersModule } from '../sellers/sellers.module';
 import { UserAddressModule } from '../user-address/user-address.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { OrderDetailsModule } from '../order-details/order-details.module';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { ProductsModule } from '../products/products.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, OrderDetail]),
@@ -17,6 +19,8 @@ import { OrderDetailsModule } from '../order-details/order-details.module';
     UserAddressModule,
     PaymentsModule,
     OrderDetailsModule,
+    CloudinaryModule,
+    ProductsModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

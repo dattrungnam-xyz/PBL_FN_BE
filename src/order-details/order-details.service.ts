@@ -35,4 +35,11 @@ export class OrderDetailsService {
 
     return this.orderDetailRepository.save(orderDetail);
   }
+
+  async getOrderDetailById(orderDetailId: string) {
+    return this.orderDetailRepository.findOne({
+      where: { id: orderDetailId },
+      relations: ['product', 'order'],
+    });
+  }
 }
