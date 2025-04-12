@@ -129,7 +129,9 @@ export class ReviewsService {
       previousCycle: previousCycleReviewStar || 0,
       percentage: previousCycleReviewStar
         ? Math.round((currentCycleReviewStar / previousCycleReviewStar) * 100)
-        : 100,
+        : currentCycleReviewStar
+        ? 100
+        : 0,
     };
   }
 }

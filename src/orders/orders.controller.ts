@@ -172,6 +172,15 @@ export class OrdersController {
     return this.ordersService.getRevenueByType(user.seller.id, type);
   }
 
+  @Get('analysis/revenue-by-category')
+  @UseGuards(JwtAuthGuard)
+  async getRevenueByCategory(
+    @CurrentUser() user: User,
+    @Query('type') type: 'year' | 'month' | 'week',
+  ) {
+    return this.ordersService.getRevenueByTypeAndCategory(user, type);
+  }
+
   @Get('analysis/order')
   @UseGuards(JwtAuthGuard)
   async getOrderCount(
@@ -183,6 +192,8 @@ export class OrdersController {
         currentCycle: 0,
         previousCycle: 0,
         percentage: 0,
+        currentCycleTotalPrice: 0,
+        previousCycleTotalPrice: 0,
       };
     }
     return this.ordersService.getOrderCountByType(user.seller.id, type);

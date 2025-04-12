@@ -27,6 +27,8 @@ import { RequestRefundDTO } from './dto/requestRefund.dto';
 import { ProductsService } from '../products/products.service';
 import { PaymentStatusType } from '../common/type/paymentStatus.type';
 import { getDateCycle } from '../utils/generateDateCycle';
+import { User } from '../users/entity/user.entity';
+import { CategoryType } from '../common/type/category.type';
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
 export class OrdersService {
@@ -39,6 +41,8 @@ export class OrdersService {
     private readonly paymentService: PaymentsService,
     private readonly orderDetailService: OrderDetailsService,
     private readonly productService: ProductsService,
+    @InjectRepository(OrderDetail)
+    private readonly orderDetailRepository: Repository<OrderDetail>,
   ) {}
 
   async createOrder(userId: string, createOrderDTO: CreateOrderDTO) {
@@ -415,7 +419,12 @@ export class OrdersService {
               )) *
               100,
           )
-        : 100,
+        : currentCycleOrders.reduce(
+            (acc, order) => acc + order.totalPrice,
+            0,
+          )
+          ? 100
+          : 0,
     };
   }
 
@@ -442,11 +451,21 @@ export class OrdersService {
     return {
       currentCycle: currentCycleOrders.length,
       previousCycle: previousCycleOrders.length,
+      currentCycleTotalPrice: currentCycleOrders.reduce(
+        (acc, order) => acc + order.totalPrice,
+        0,
+      ),
+      previousCycleTotalPrice: previousCycleOrders.reduce(
+        (acc, order) => acc + order.totalPrice,
+        0,
+      ),
       percentage: previousCycleOrders.length
         ? Math.round(
             (currentCycleOrders.length / previousCycleOrders.length) * 100,
           )
-        : 100,
+        : currentCycleOrders.length
+        ? 100
+        : 0,
     };
   }
 
@@ -488,7 +507,78 @@ export class OrdersService {
         ? Math.round(
             (currentCycleCustomerCount / previousCycleCustomerCount) * 100,
           )
-        : 100,
+        : currentCycleCustomerCount
+        ? 100
+        : 0,
     };
+  }
+
+  async getRevenueByTypeAndCategory(
+    user: User,
+    type: 'year' | 'month' | 'week',
+  ) {
+    if (!user.seller || !type) {
+      throw new BadRequestException('User or type is required');
+    }
+
+    const { startDate, startDatePreviousCycle } = getDateCycle(type);
+    const listCategory = Object.values(CategoryType);
+    const listRevenue = [];
+    for (const category of listCategory) {
+      const listOrderDetail = await this.orderDetailRepository.find({
+        where: {
+          product: {
+            category,
+          },
+          order: {
+            seller: { id: user.seller.id },
+            payment: { paymentStatus: PaymentStatusType.PAID },
+            createdAt: MoreThan(startDate),
+            orderStatus: Not(
+              In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+            ),
+          },
+        },
+        relations: ['product'],
+      });
+      const revenue = listOrderDetail.reduce(
+        (acc, orderDetail) =>
+          acc + orderDetail.product.price * orderDetail.quantity,
+        0,
+      );
+
+      const previousCycleOrderDetail = await this.orderDetailRepository.find({
+        where: {
+          product: {
+            category,
+          },
+          order: {
+            seller: { id: user.seller.id },
+            payment: { paymentStatus: PaymentStatusType.PAID },
+            createdAt: Between(startDatePreviousCycle, startDate),
+            orderStatus: Not(
+              In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+            ),
+          },
+        },
+        relations: ['product'],
+      });
+      const previousCycleRevenue = previousCycleOrderDetail.reduce(
+        (acc, orderDetail) =>
+          acc + orderDetail.product.price * orderDetail.quantity,
+        0,
+      );
+      listRevenue.push({
+        category,
+        revenueCurrentCycle: revenue,
+        revenuePreviousCycle: previousCycleRevenue,
+        percentage: previousCycleRevenue
+          ? Math.round((revenue / previousCycleRevenue) * 100)
+          : revenue
+          ? 100
+          : 0,
+      });
+    }
+    return listRevenue;
   }
 }

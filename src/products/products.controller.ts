@@ -78,7 +78,7 @@ export class ProductsController {
 
   @Get('seller/top-rating')
   @UseGuards(JwtAuthGuard)
-  getTopSellerReviews(
+  getTopSellReviews(
     @CurrentUser() user: User,
     @Query('type', new DefaultValuePipe('year'))
     type: 'year' | 'month' | 'week',
@@ -86,7 +86,20 @@ export class ProductsController {
     if (!user.seller) {
       throw new BadRequestException('User is not a seller');
     }
-    return this.productsService.getTopSellerReviews(user.seller.id, type);
+    return this.productsService.getTopSellReviews(user.seller.id, type);
+  }
+
+  @Get('seller/top-trending')
+  @UseGuards(JwtAuthGuard)
+  getTopSellTrending(
+    @CurrentUser() user: User,
+    @Query('type', new DefaultValuePipe('year'))
+    type: 'year' | 'month' | 'week',
+  ) {
+    if (!user.seller) {
+      throw new BadRequestException('User is not a seller');
+    }
+    return this.productsService.getTopSellTrending(user.seller.id, type);
   }
 
   @Get('seller/:id')
