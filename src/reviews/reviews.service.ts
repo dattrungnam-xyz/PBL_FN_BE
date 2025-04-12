@@ -4,13 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, MoreThan, Repository } from 'typeorm';
 import { Review } from './entity/review.entity';
 import { CreateReviewDTO } from './dto/createReview.dto';
 import { ProductsService } from '../products/products.service';
 import { UsersService } from '../users/users.service';
 import { UpdateReviewDTO } from './dto/updateReview.dto';
 import { OrderDetailsService } from '../order-details/order-details.service';
+import { getDateCycle } from '../utils/generateDateCycle';
 @Injectable()
 export class ReviewsService {
   constructor(
@@ -20,11 +21,10 @@ export class ReviewsService {
     private userService: UsersService,
   ) {}
 
-  async createReview(
-    userId: string,
-    createReviewDto: CreateReviewDTO,
-  ) {
-    const orderDetail = await this.orderDetailService.getOrderDetailById(createReviewDto.orderDetailId);
+  async createReview(userId: string, createReviewDto: CreateReviewDTO) {
+    const orderDetail = await this.orderDetailService.getOrderDetailById(
+      createReviewDto.orderDetailId,
+    );
     if (!orderDetail) {
       throw new NotFoundException('Order detail not found');
     }
@@ -99,5 +99,37 @@ export class ReviewsService {
       relations: ['user', 'orderDetail', 'product'],
     });
     return reviews;
+  }
+
+  async getReviewCountByType(
+    sellerId: string,
+    type: 'year' | 'month' | 'week',
+  ) {
+    const { startDate, startDatePreviousCycle } = getDateCycle(type);
+    const currentCycleReviews = await this.reviewRepository.find({
+      where: {
+        product: { seller: { id: sellerId } },
+        createdAt: MoreThan(startDate),
+      },
+    });
+    const previousCycleReviews = await this.reviewRepository.find({
+      where: {
+        product: { seller: { id: sellerId } },
+        createdAt: Between(startDatePreviousCycle, startDate),
+      },
+    });
+    const currentCycleReviewStar =
+      currentCycleReviews.reduce((acc, review) => acc + review.rating, 0) /
+      currentCycleReviews.length;
+    const previousCycleReviewStar =
+      previousCycleReviews.reduce((acc, review) => acc + review.rating, 0) /
+      previousCycleReviews.length;
+    return {
+      currentCycle: currentCycleReviewStar || 0,
+      previousCycle: previousCycleReviewStar || 0,
+      percentage: previousCycleReviewStar
+        ? Math.round((currentCycleReviewStar / previousCycleReviewStar) * 100)
+        : 100,
+    };
   }
 }

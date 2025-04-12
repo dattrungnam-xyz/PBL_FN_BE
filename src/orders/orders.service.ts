@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Between, In, LessThan, MoreThan, Not, Repository } from 'typeorm';
 import { Order, PaginatedOrder } from './entity/order.entity';
 import { CreateOrderDTO } from './dto/createOrder.dto';
 import { OrderStatusType } from '../common/type/orderStatus.type';
@@ -25,6 +25,8 @@ import { RejectOrderDTO } from './dto/rejectOrder.dto';
 import { RequestCancelDTO } from './dto/requestCancel.dto';
 import { RequestRefundDTO } from './dto/requestRefund.dto';
 import { ProductsService } from '../products/products.service';
+import { PaymentStatusType } from '../common/type/paymentStatus.type';
+import { getDateCycle } from '../utils/generateDateCycle';
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
 export class OrdersService {
@@ -349,5 +351,140 @@ export class OrdersService {
     order.orderStatus = OrderStatusType.REJECTED;
     order.rejectReason = reason;
     return this.orderRepository.save(order);
+  }
+
+  async getRevenueByType(sellerId: string, type: 'year' | 'month' | 'week') {
+    const { startDate, startDatePreviousCycle } = getDateCycle(type);
+    const currentCycleOrders = await this.orderRepository.find({
+      where: {
+        seller: { id: sellerId },
+        payment: { paymentStatus: PaymentStatusType.PAID },
+        createdAt: MoreThan(startDate),
+        orderStatus: Not(
+          In([
+            OrderStatusType.CANCELLED,
+            OrderStatusType.REJECTED,
+            OrderStatusType.REQUIRE_CANCEL,
+            OrderStatusType.REQUIRE_REFUND,
+            OrderStatusType.REFUNDED,
+          ]),
+        ),
+      },
+      relations: ['payment'],
+    });
+    const previousCycleOrders = await this.orderRepository.find({
+      where: {
+        seller: { id: sellerId },
+        payment: { paymentStatus: PaymentStatusType.PAID },
+        createdAt: Between(startDatePreviousCycle, startDate),
+        orderStatus: Not(
+          In([
+            OrderStatusType.CANCELLED,
+            OrderStatusType.REJECTED,
+            OrderStatusType.REQUIRE_CANCEL,
+            OrderStatusType.REQUIRE_REFUND,
+            OrderStatusType.REFUNDED,
+          ]),
+        ),
+      },
+      relations: ['payment'],
+    });
+    return {
+      currentCycle: Math.round(
+        currentCycleOrders.reduce((acc, order) => acc + order.totalPrice, 0),
+      ),
+      previousCycle: Math.round(
+        previousCycleOrders.reduce((acc, order) => acc + order.totalPrice, 0),
+      ),
+      percentage: previousCycleOrders.reduce(
+        (acc, order) => acc + order.totalPrice,
+        0,
+      )
+        ? Math.round(
+            (currentCycleOrders.reduce(
+              (acc, order) => acc + order.totalPrice,
+              0,
+            ) /
+              previousCycleOrders.reduce(
+                (acc, order) => acc + order.totalPrice,
+                0,
+              )) *
+              100,
+          )
+        : 100,
+    };
+  }
+
+  async getOrderCountByType(sellerId: string, type: 'year' | 'month' | 'week') {
+    const { startDate, startDatePreviousCycle } = getDateCycle(type);
+    const currentCycleOrders = await this.orderRepository.find({
+      where: {
+        seller: { id: sellerId },
+        createdAt: MoreThan(startDate),
+        orderStatus: Not(
+          In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+        ),
+      },
+    });
+    const previousCycleOrders = await this.orderRepository.find({
+      where: {
+        seller: { id: sellerId },
+        createdAt: Between(startDatePreviousCycle, startDate),
+        orderStatus: Not(
+          In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+        ),
+      },
+    });
+    return {
+      currentCycle: currentCycleOrders.length,
+      previousCycle: previousCycleOrders.length,
+      percentage: previousCycleOrders.length
+        ? Math.round(
+            (currentCycleOrders.length / previousCycleOrders.length) * 100,
+          )
+        : 100,
+    };
+  }
+
+  async getCustomerCountByType(
+    sellerId: string,
+    type: 'year' | 'month' | 'week',
+  ) {
+    const { startDate, startDatePreviousCycle } = getDateCycle(type);
+    const currentCycleCustomers = await this.orderRepository.find({
+      where: {
+        seller: { id: sellerId },
+        createdAt: MoreThan(startDate),
+        orderStatus: Not(
+          In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+        ),
+      },
+      relations: ['user'],
+    });
+    const previousCycleCustomers = await this.orderRepository.find({
+      where: {
+        seller: { id: sellerId },
+        createdAt: Between(startDatePreviousCycle, startDate),
+        orderStatus: Not(
+          In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+        ),
+      },
+      relations: ['user'],
+    });
+    const currentCycleCustomerCount = new Set(
+      currentCycleCustomers.map((customer) => customer.user.id),
+    ).size;
+    const previousCycleCustomerCount = new Set(
+      previousCycleCustomers.map((customer) => customer.user.id),
+    ).size;
+    return {
+      currentCycle: currentCycleCustomerCount,
+      previousCycle: previousCycleCustomerCount,
+      percentage: previousCycleCustomerCount
+        ? Math.round(
+            (currentCycleCustomerCount / previousCycleCustomerCount) * 100,
+          )
+        : 100,
+    };
   }
 }

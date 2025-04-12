@@ -76,6 +76,19 @@ export class ProductsController {
     return this.productsService.getAllProducts();
   }
 
+  @Get('seller/top-rating')
+  @UseGuards(JwtAuthGuard)
+  getTopSellerReviews(
+    @CurrentUser() user: User,
+    @Query('type', new DefaultValuePipe('year'))
+    type: 'year' | 'month' | 'week',
+  ) {
+    if (!user.seller) {
+      throw new BadRequestException('User is not a seller');
+    }
+    return this.productsService.getTopSellerReviews(user.seller.id, type);
+  }
+
   @Get('seller/:id')
   getProductsBySellerId(
     @Param('id') id: string,

@@ -51,6 +51,7 @@ export class AuthService {
     }
     const user: User = await this.userRepository.findOne({
       where: { username },
+      relations: ["seller"],
     });
     if (!user) {
       this.logger.debug(`User ${username} not found`);
@@ -60,7 +61,9 @@ export class AuthService {
       this.logger.debug(`Password incorrect!`);
       throw new LoginException();
     }
-
+    if (user.seller) {
+      user.storeId = user.seller.id;
+    }
     return user;
   }
   public signToken(user: User): string {

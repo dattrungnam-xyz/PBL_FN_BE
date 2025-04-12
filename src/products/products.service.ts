@@ -13,6 +13,7 @@ import { SellProductType } from '../common/type/sellProduct.type';
 import { SellersService } from '../sellers/sellers.service';
 import { paginate } from '../pagination/paginator';
 import { VerifyOCOPStatus } from '../common/type/verifyOCOP.type';
+import { getDateCycle } from '../utils/generateDateCycle';
 @Injectable()
 export class ProductsService {
   constructor(
@@ -133,4 +134,31 @@ export class ProductsService {
     product.quantity = quantity;
     return this.productRepository.save(product);
   }
+
+  async getTopSellerReviews(sellerId: string, type: 'year' | 'month' | 'week') {
+    const { startDate } = getDateCycle(type);
+  
+    const products = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoin('product.seller', 'seller')
+      .leftJoin(
+        'product.reviews',
+        'review',
+        'review.createdAt >= :startDate',
+        { startDate },
+      )
+      .where('seller.id = :sellerId', { sellerId })
+      .groupBy('product.id')
+      .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
+      .addSelect('COUNT(review.id)', 'reviewCount')
+      .orderBy('avgRating', 'DESC')
+      .getRawAndEntities();
+  
+    return products.entities.map((product, index) => ({
+      ...product,
+      avgRating: parseFloat(products.raw[index].avgRating),
+      reviewCount: parseInt(products.raw[index].reviewCount, 10),
+    }));
+  }
+  
 }

@@ -155,4 +155,52 @@ export class OrdersController {
   ) {
     return this.ordersService.rejectRefund(id, rejectRefundDTO.reason);
   }
+
+  @Get('analysis/revenue')
+  @UseGuards(JwtAuthGuard)
+  async getRevenue(
+    @CurrentUser() user: User,
+    @Query('type') type: 'year' | 'month' | 'week',
+  ) {
+    if (!user.seller || !type) {
+      return {
+        currentCycle: 0,
+        previousCycle: 0,
+        percentage: 0,
+      };
+    }
+    return this.ordersService.getRevenueByType(user.seller.id, type);
+  }
+
+  @Get('analysis/order')
+  @UseGuards(JwtAuthGuard)
+  async getOrderCount(
+    @CurrentUser() user: User,
+    @Query('type') type: 'year' | 'month' | 'week',
+  ) {
+    if (!user.seller || !type) {
+      return {
+        currentCycle: 0,
+        previousCycle: 0,
+        percentage: 0,
+      };
+    }
+    return this.ordersService.getOrderCountByType(user.seller.id, type);
+  }
+
+  @Get('analysis/customer')
+  @UseGuards(JwtAuthGuard)
+  async getCustomerCount(
+    @CurrentUser() user: User,
+    @Query('type') type: 'year' | 'month' | 'week',
+  ) {
+    if (!user.seller || !type) {
+      return {
+        currentCycle: 0,
+        previousCycle: 0,
+        percentage: 0,
+      };
+    }
+    return this.ordersService.getCustomerCountByType(user.seller.id, type);
+  }
 }
