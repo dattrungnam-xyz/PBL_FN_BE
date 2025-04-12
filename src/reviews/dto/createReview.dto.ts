@@ -8,6 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { IsImage } from '../../common/validation/IsImage.constraint';
+import { IsImageOrVideo } from '../../common/validation/IsImageOrVideo.constraint';
 
 export class CreateReviewDTO {
   @IsNotEmpty()
@@ -22,7 +23,7 @@ export class CreateReviewDTO {
 
   @IsOptional()
   @IsArray()
-  @IsImage({ each: true })
+  @IsImageOrVideo({ each: true })
   media: string[];
 
   @IsNotEmpty()

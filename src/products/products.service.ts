@@ -53,7 +53,13 @@ export class ProductsService {
   async getProductById(id: string) {
     const product = await this.productRepository.findOne({
       where: { id },
-      relations: ['seller'],
+      relations: [
+        'seller',
+        'reviews',
+        'reviews.user',
+        'reviews.orderDetail',
+        'reviews.orderDetail.product',
+      ],
     });
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -137,28 +143,24 @@ export class ProductsService {
 
   async getTopSellerReviews(sellerId: string, type: 'year' | 'month' | 'week') {
     const { startDate } = getDateCycle(type);
-  
+
     const products = await this.productRepository
       .createQueryBuilder('product')
       .leftJoin('product.seller', 'seller')
-      .leftJoin(
-        'product.reviews',
-        'review',
-        'review.createdAt >= :startDate',
-        { startDate },
-      )
+      .leftJoin('product.reviews', 'review', 'review.createdAt >= :startDate', {
+        startDate,
+      })
       .where('seller.id = :sellerId', { sellerId })
       .groupBy('product.id')
       .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
       .addSelect('COUNT(review.id)', 'reviewCount')
       .orderBy('avgRating', 'DESC')
       .getRawAndEntities();
-  
+
     return products.entities.map((product, index) => ({
       ...product,
       avgRating: parseFloat(products.raw[index].avgRating),
       reviewCount: parseInt(products.raw[index].reviewCount, 10),
     }));
   }
-  
 }

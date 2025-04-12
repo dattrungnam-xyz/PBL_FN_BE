@@ -80,7 +80,7 @@ export class ReviewsService {
     if (review.user.id !== userId) {
       throw new ForbiddenException('You are not allowed to delete this review');
     }
-    return this.reviewRepository.softDelete(reviewId);
+    return this.reviewRepository.delete(reviewId);
   }
 
   async deleteReviewByOrderId(orderId: string) {

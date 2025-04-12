@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  UseGuards,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDTO } from './dto/createReview.dto';
 import { JwtAuthGuard } from '../auth/authGuard.jwt';
@@ -19,8 +28,7 @@ export class ReviewsController {
     @Body() createReviewDTO: CreateReviewDTO,
     @CurrentUser() user: User,
   ) {
-    if(createReviewDTO.media)
-    {
+    if (createReviewDTO.media) {
       const uploadedImages = await Promise.all(
         createReviewDTO.media.map((image) =>
           this.cloudinaryService.uploadImageBase64(image),
@@ -45,5 +53,11 @@ export class ReviewsController {
       };
     }
     return this.reviewsService.getReviewCountByType(user.seller.id, type);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async deleteReview(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.reviewsService.deleteReview(id, user.id);
   }
 }

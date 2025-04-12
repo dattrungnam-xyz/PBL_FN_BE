@@ -86,7 +86,11 @@ export class OrdersService {
         'seller',
         'user',
         'orderDetails.product',
+        'orderDetails.review',
       ],
+      order: {
+        createdAt: 'DESC',
+      },
     });
   }
 
