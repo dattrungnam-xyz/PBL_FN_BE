@@ -5,13 +5,15 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, MoreThan, Repository } from 'typeorm';
-import { Review } from './entity/review.entity';
+import { PaginatedReview, Review } from './entity/review.entity';
 import { CreateReviewDTO } from './dto/createReview.dto';
 import { ProductsService } from '../products/products.service';
 import { UsersService } from '../users/users.service';
 import { UpdateReviewDTO } from './dto/updateReview.dto';
 import { OrderDetailsService } from '../order-details/order-details.service';
 import { getDateCycle } from '../utils/generateDateCycle';
+import { PaginatedProduct } from '../products/entity/product.entity';
+import { paginate } from '../pagination/paginator';
 @Injectable()
 export class ReviewsService {
   constructor(
@@ -133,5 +135,111 @@ export class ReviewsService {
         ? 100
         : 0,
     };
+  }
+  async getStatistics(sellerId: string) {
+    const reviews = await this.reviewRepository.find({
+      where: { product: { seller: { id: sellerId } } },
+    });
+    const res = {
+      totalReviews: reviews.length || 0,
+      averageRating:
+        reviews.length > 0
+          ? reviews.reduce((acc, review) => acc + review.rating, 0) /
+            reviews.length
+          : 0,
+      ratingDistribution: [
+        {
+          rating: 5,
+          count: reviews.filter((review) => review.rating === 5).length || 0,
+          percentage:
+            (reviews.filter((review) => review.rating === 5).length /
+              reviews.length) *
+            100,
+        },
+        {
+          rating: 4,
+          count: reviews.filter((review) => review.rating === 4).length || 0,
+          percentage:
+            (reviews.filter((review) => review.rating === 4).length /
+              reviews.length) *
+            100,
+        },
+        {
+          rating: 3,
+          count: reviews.filter((review) => review.rating === 3).length || 0,
+          percentage:
+            (reviews.filter((review) => review.rating === 3).length /
+              reviews.length) *
+            100,
+        },
+        {
+          rating: 2,
+          count: reviews.filter((review) => review.rating === 2).length || 0,
+          percentage:
+            (reviews.filter((review) => review.rating === 2).length /
+              reviews.length) *
+            100,
+        },
+        {
+          rating: 1,
+          count: reviews.filter((review) => review.rating === 1).length || 0,
+          percentage:
+            (reviews.filter((review) => review.rating === 1).length /
+              reviews.length) *
+            100,
+        },
+      ],
+    };
+    return res;
+  }
+  async getRecentReviews(sellerId: string) {
+    const reviews = await this.reviewRepository.find({
+      where: { product: { seller: { id: sellerId } } },
+      order: { createdAt: 'DESC' },
+      take: 5,
+      relations: ['user', 'product', 'orderDetail'],
+    });
+    return reviews;
+  }
+  async getSellerReviews(
+    sellerId: string,
+    {
+      limit,
+      page,
+      search,
+      productId,
+      rating,
+    }: {
+      limit: number;
+      page: number;
+      search?: string;
+      productId?: string;
+      rating?: number;
+    },
+  ) {
+    const offset = page * limit;
+    let qb = this.reviewRepository
+      .createQueryBuilder('review')
+      .leftJoinAndSelect('review.product', 'product')
+      .leftJoinAndSelect('review.user', 'user')
+      .leftJoinAndSelect('review.orderDetail', 'orderDetail')
+      .where('product.seller.id = :id', { id: sellerId })
+      .andWhere('product.deletedAt IS NULL')
+      .orderBy('review.createdAt', 'DESC');
+    if (search) {
+      qb = qb.andWhere('product.name LIKE :search', { search: `%${search}%` });
+    }
+    if (productId) {
+      qb = qb.andWhere('product.id = :productId', { productId });
+    }
+    if (rating) {
+      qb = qb.andWhere('review.rating = :rating', { rating });
+    }
+
+    return await paginate<Review, PaginatedReview>(qb, PaginatedReview, {
+      limit,
+      page,
+      total: true,
+    });
   }
 }

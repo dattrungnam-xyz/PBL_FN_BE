@@ -214,4 +214,11 @@ export class OrdersController {
     }
     return this.ordersService.getCustomerCountByType(user.seller.id, type);
   }
+
+  @Get("customers/statistics")
+  @UseGuards(JwtAuthGuard)
+  async getCustomerStatistics(@CurrentUser() user: User) {
+    return this.ordersService.getCustomerStatistics(user.seller.id);
+  }
+
 }

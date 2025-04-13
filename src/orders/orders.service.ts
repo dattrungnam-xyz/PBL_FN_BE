@@ -399,28 +399,28 @@ export class OrdersService {
     });
     return {
       currentCycle: Math.round(
-        currentCycleOrders.reduce((acc, order) => acc + order.totalPrice, 0),
+        currentCycleOrders.reduce((acc, order) => acc + order.totalPrice- order.shippingFee, 0),
       ),
       previousCycle: Math.round(
-        previousCycleOrders.reduce((acc, order) => acc + order.totalPrice, 0),
+        previousCycleOrders.reduce((acc, order) => acc + order.totalPrice- order.shippingFee, 0),
       ),
       percentage: previousCycleOrders.reduce(
-        (acc, order) => acc + order.totalPrice,
+        (acc, order) => acc + order.totalPrice- order.shippingFee,
         0,
       )
         ? Math.round(
             (currentCycleOrders.reduce(
-              (acc, order) => acc + order.totalPrice,
+              (acc, order) => acc + order.totalPrice- order.shippingFee,
               0,
             ) /
               previousCycleOrders.reduce(
-                (acc, order) => acc + order.totalPrice,
+                (acc, order) => acc + order.totalPrice- order.shippingFee,
                 0,
               )) *
               100,
           )
         : currentCycleOrders.reduce(
-            (acc, order) => acc + order.totalPrice,
+            (acc, order) => acc + order.totalPrice- order.shippingFee,
             0,
           )
           ? 100
@@ -452,11 +452,11 @@ export class OrdersService {
       currentCycle: currentCycleOrders.length,
       previousCycle: previousCycleOrders.length,
       currentCycleTotalPrice: currentCycleOrders.reduce(
-        (acc, order) => acc + order.totalPrice,
+        (acc, order) => acc + order.totalPrice- order.shippingFee,
         0,
       ),
       previousCycleTotalPrice: previousCycleOrders.reduce(
-        (acc, order) => acc + order.totalPrice,
+        (acc, order) => acc + order.totalPrice- order.shippingFee,
         0,
       ),
       percentage: previousCycleOrders.length
@@ -580,5 +580,40 @@ export class OrdersService {
       });
     }
     return listRevenue;
+  }
+
+  async getCustomerStatistics(sellerId: string) {
+    const listCustomer = await this.orderRepository.find({
+      where: {
+        seller: { id: sellerId },
+        payment: { paymentStatus: PaymentStatusType.PAID },
+        orderStatus: Not(
+          In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+        ),
+      },
+      relations: ['user', 'orderDetails', "orderDetails.review"],
+    });
+    const res = {
+      totalCustomers: 0,
+      avrgRevenue: 0,
+      returningCustomers: 0,
+      highlyRatedCustomers: 0,
+    }
+    if(!listCustomer.length) {
+      return res;
+    }
+    res.avrgRevenue = listCustomer.reduce((acc, order) => acc + order.totalPrice- order.shippingFee, 0) / listCustomer.length;
+    const customerOrderCount = new Map<string, number>();
+    listCustomer.forEach((customer) => {
+      const count = customerOrderCount.get(customer.user.id) || 0;
+      customerOrderCount.set(customer.user.id, count + 1);
+    });
+    res.returningCustomers   = Array.from(customerOrderCount.values()).filter(
+      (count) => count > 1,
+    ).length;
+    res.totalCustomers = customerOrderCount.size;
+    const satisfiedCustomer = listCustomer.filter((customer) => customer.orderDetails.some((orderDetail) => orderDetail.review.rating >= 4));
+    res.highlyRatedCustomers =  new Set(satisfiedCustomer.map((customer) => customer.user.id)).size;
+    return res;
   }
 }

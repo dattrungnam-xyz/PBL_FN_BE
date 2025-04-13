@@ -131,4 +131,10 @@ export class UsersController {
   async getProfile(@CurrentUser() user: User) {
     return user;
   }
+
+  @Get('top-customers')
+  @UseGuards(JwtAuthGuard)
+  async getTopCustomers(@CurrentUser() user: User) {
+    return this.usersService.getTopCustomers(user.seller.id);
+  }
 }

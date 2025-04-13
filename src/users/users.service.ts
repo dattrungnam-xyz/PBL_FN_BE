@@ -5,13 +5,15 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entity/user.entity';
-import { IsNull, Not, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import { UpdateProfileDTO } from './input/updateProfile.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import * as bcrypt from 'bcrypt';
 import { UpdatePasswordDTO } from './input/updatePassword.dto';
 import { Role } from '../common/type/role.type';
 import { UpdateRoleDTO } from './input/updateRole.dto';
+import { OrderStatusType } from '../common/type/orderStatus.type';
+import { PaymentStatusType } from '../common/type/paymentStatus.type';
 
 @Injectable()
 export class UsersService {
@@ -103,5 +105,47 @@ export class UsersService {
     }
     user.roles = updateRoleDTO.roles;
     return await this.userRepository.save(user);
+  }
+  async getTopCustomers(sellerId: string) {
+    const listCustomer = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.orders', 'order')
+      .leftJoin('order.payment', 'payment')
+      .leftJoin('order.seller', 'seller')
+      .leftJoin('order.orderDetails', 'orderDetails')
+      .leftJoin('orderDetails.review', 'review')
+      .where('seller.id = :sellerId', { sellerId })
+      .andWhere('payment.paymentStatus = :paid', {
+        paid: PaymentStatusType.PAID,
+      })
+      .andWhere('order.orderStatus NOT IN (:...status)', {
+        status: [OrderStatusType.CANCELLED, OrderStatusType.REJECTED],
+      })
+      .groupBy('user.id')
+      .addSelect('COUNT(order.id)', 'orderCount')
+      .addSelect('AVG(review.rating)', 'averageRating')
+      .addSelect('SUM(order.totalPrice - order.shippingFee)', 'totalOrder')
+      .addSelect('MAX(order.createdAt)', 'lastOrder')
+      .orderBy('orderCount', 'DESC')
+      .limit(5)
+      .getRawAndEntities();
+    return listCustomer.raw.map((rawRow, index) => {
+      const customer = listCustomer.entities[index];
+      return {
+        id: customer.id,
+        name: customer.name,
+        avatar: customer.avatar,
+        email: customer.email,
+        phone: customer.phone,
+        orderCount: parseInt(rawRow.orderCount, 10),
+        averageRating: rawRow.averageRating
+          ? parseFloat(rawRow.averageRating).toFixed(2)
+          : null,
+        totalSpent: rawRow.totalOrder
+          ? parseFloat(rawRow.totalOrder).toFixed(2)
+          : 0,
+        lastOrder: rawRow.lastOrder ? new Date(rawRow.lastOrder) : null,
+      };
+    });
   }
 }

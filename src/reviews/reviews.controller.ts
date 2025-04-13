@@ -7,6 +7,8 @@ import {
   UseGuards,
   Delete,
   Param,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDTO } from './dto/createReview.dto';
@@ -53,6 +55,35 @@ export class ReviewsController {
       };
     }
     return this.reviewsService.getReviewCountByType(user.seller.id, type);
+  }
+  @Get('statistics')
+  @UseGuards(JwtAuthGuard)
+  async getStatistics(@CurrentUser() user: User) {
+    return this.reviewsService.getStatistics(user.seller.id);
+  }
+
+  @Get('recent')
+  @UseGuards(JwtAuthGuard)
+  async getRecentReviews(@CurrentUser() user: User) {
+    return this.reviewsService.getRecentReviews(user.seller.id);
+  }
+  @Get('seller')
+  @UseGuards(JwtAuthGuard)
+  async getSellerReviews(
+    @CurrentUser() user: User,
+    @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('search') search?: string,
+    @Query('productId') productId?: string,
+    @Query('rating') rating?: number,
+  ) {
+    return this.reviewsService.getSellerReviews(user.seller.id, {
+      limit,
+      page,
+      search,
+      productId,
+      rating,
+    });
   }
 
   @Delete(':id')

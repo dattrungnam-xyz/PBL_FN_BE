@@ -13,6 +13,7 @@ import {
 import { Product } from '../../products/entity/product.entity';
 import { User } from '../../users/entity/user.entity';
 import { OrderDetail } from '../../order-details/entity/orderDetail.entity';
+import { Paginated } from '../../pagination/paginator';
 @Entity()
 export class Review {
   constructor(partial?: Partial<Review>) {
@@ -53,3 +54,5 @@ export class Review {
   @JoinColumn()
   orderDetail: OrderDetail;
 }
+
+export class PaginatedReview extends Paginated<Review>(Review) {}
