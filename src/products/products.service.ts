@@ -75,7 +75,6 @@ export class ProductsService {
   }
 
   async getProductsBySellerId(
-    id: string,
     {
       search,
       status,
@@ -91,14 +90,18 @@ export class ProductsService {
       page: number;
       verifyStatus?: VerifyOCOPStatus;
     },
+    id?: string,
   ) {
     const offset = page * limit;
     let qb = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.seller', 'seller')
-      .where('seller.id = :id', { id })
+      .where('seller.deletedAt IS NULL')
       .andWhere('product.deletedAt IS NULL')
       .orderBy('product.createdAt', 'DESC');
+    if (id) {
+      qb = qb.andWhere('seller.id = :id', { id });
+    }
     if (search) {
       qb = qb.andWhere('product.name LIKE :search', { search: `%${search}%` });
     }

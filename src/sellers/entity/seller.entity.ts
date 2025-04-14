@@ -12,6 +12,7 @@ import {
 import { User } from '../../users/entity/user.entity';
 import { Product } from '../../products/entity/product.entity';
 import { Order } from '../../orders/entity/order.entity';
+import { Paginated } from '../../pagination/paginator';
 
 @Entity()
 export class Seller {
@@ -93,3 +94,5 @@ export class Seller {
   @OneToMany(() => Order, (order) => order.seller)
   orders: Order[];
 }
+
+export class PaginatedSeller extends Paginated<Seller>(Seller) {}

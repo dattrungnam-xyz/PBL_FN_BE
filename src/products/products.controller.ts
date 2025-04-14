@@ -101,6 +101,24 @@ export class ProductsController {
     }
     return this.productsService.getTopSellTrending(user.seller.id, type);
   }
+  @Get('seller')
+  getProductsAllSeller(
+    @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('search') search?: string,
+    @Query('status') status?: SellProductType,
+    @Query('category') category?: CategoryType,
+    @Query('verifyStatus') verifyStatus?: VerifyOCOPStatus,
+  ) {
+    return this.productsService.getProductsBySellerId({
+      limit,
+      page,
+      search,
+      status,
+      category,
+      verifyStatus,
+    });
+  }
 
   @Get('seller/:id')
   getProductsBySellerId(
@@ -112,14 +130,17 @@ export class ProductsController {
     @Query('category') category?: CategoryType,
     @Query('verifyStatus') verifyStatus?: VerifyOCOPStatus,
   ) {
-    return this.productsService.getProductsBySellerId(id, {
-      limit,
-      page,
-      search,
-      status,
-      category,
-      verifyStatus,
-    });
+    return this.productsService.getProductsBySellerId(
+      {
+        limit,
+        page,
+        search,
+        status,
+        category,
+        verifyStatus,
+      },
+      id,
+    );
   }
 
   @Get(':id')

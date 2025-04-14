@@ -3,11 +3,14 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  DefaultValuePipe,
   Get,
+  ParseIntPipe,
   Param,
   Patch,
   Post,
   Put,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -57,8 +60,22 @@ export class SellersController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
-  getSellers() {
-    return this.sellersService.getSellers();
+  getSellers(
+    @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('search') search?: string,
+    @Query('province') province?: string,
+    @Query('district') district?: string,
+    @Query('ward') ward?: string,
+  ) {
+    return this.sellersService.getSellers({
+      limit,
+      page,
+      search,
+      province,
+      district,
+      ward,
+    });
   }
 
   @Get('user')
