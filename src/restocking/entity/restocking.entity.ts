@@ -41,4 +41,4 @@ export class Restocking {
   product: Product;
 }
 
-export class PaginatedProduct extends Paginated<Product>(Product) {}
+export class PaginatedRestocking extends Paginated<Restocking>(Restocking) {}
