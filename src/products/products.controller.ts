@@ -10,6 +10,8 @@ import {
   Query,
   ParseIntPipe,
   DefaultValuePipe,
+  Delete,
+  Patch,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDTO } from './dto/createProduct.dto';
@@ -146,5 +148,24 @@ export class ProductsController {
   @Get(':id')
   getProductById(@Param('id') id: string) {
     return this.productsService.getProductById(id);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  deleteProduct(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.productsService.deleteProduct(id, user.id);
+  }
+
+  @Patch(':id/quantity')
+  @UseGuards(JwtAuthGuard)
+  updateProductQuantity(
+    @Param('id') id: string,
+    @Body() body: { quantity: number },
+    @CurrentUser() user: User,
+  ) {
+    if (!user.seller) {
+      throw new BadRequestException('User is not a seller');
+    }
+    return this.productsService.addProductQuantity(id, body.quantity);
   }
 }

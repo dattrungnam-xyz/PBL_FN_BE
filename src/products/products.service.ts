@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -43,11 +44,21 @@ export class ProductsService {
     return updatedProduct;
   }
 
-  async deleteProduct(id: string) {
-    const result = await this.productRepository.softDelete(id);
-    if (result.affected === 0) {
+  async deleteProduct(id: string, userId: string) {
+    const product = await this.productRepository.findOne({
+      where: {
+        seller: {
+          user: {
+            id: userId,
+          },
+        },
+        id,
+      },
+    });
+    if (!product) {
       throw new NotFoundException('Product not found');
     }
+    const result = await this.productRepository.softDelete(id);
   }
 
   async getProductById(id: string) {
@@ -59,6 +70,7 @@ export class ProductsService {
         'reviews.user',
         'reviews.orderDetail',
         'reviews.orderDetail.product',
+        'orderDetails',
       ],
     });
     if (!product) {
@@ -206,5 +218,14 @@ export class ProductsService {
         totalRevenue: parseFloat(products.raw[index].totalRevenue),
       }))
       .slice(0, 5);
+  }
+
+  async addProductQuantity(id: string, quantity: number) {
+    const product = await this.getProductById(id);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    product.quantity += quantity;
+    return this.productRepository.save(product);
   }
 }
