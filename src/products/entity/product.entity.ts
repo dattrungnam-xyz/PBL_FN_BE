@@ -18,6 +18,7 @@ import { VerifyOCOPStatus } from '../../common/type/verifyOCOP.type';
 import { Verify } from '../../verify/entity/verify.entity';
 import { CartItems } from '../../cart-items/entity/cartItems.entity';
 import { OrderDetail } from '../../order-details/entity/orderDetail.entity';
+import { Restocking } from '../../restocking/entity/restocking.entity';
 @Entity()
 export class Product {
   constructor(partial?: Partial<Product>) {
@@ -94,6 +95,9 @@ export class Product {
 
   @OneToMany(() => OrderDetail, (orderDetail) => orderDetail.product)
   orderDetails: OrderDetail[];
+
+  @OneToMany(() => Restocking, (restocking) => restocking.product)
+  restockings: Restocking[];
 }
 
 export class PaginatedProduct extends Paginated<Product>(Product) {}

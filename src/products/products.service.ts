@@ -15,12 +15,14 @@ import { SellersService } from '../sellers/sellers.service';
 import { paginate } from '../pagination/paginator';
 import { VerifyOCOPStatus } from '../common/type/verifyOCOP.type';
 import { getDateCycle } from '../utils/generateDateCycle';
+import { RestockingService } from '../restocking/restocking.service';
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
     private sellerService: SellersService,
+    private restockingService: RestockingService,
   ) {}
 
   async createProduct(storeId: string | undefined, product: CreateProductDTO) {
@@ -220,12 +222,17 @@ export class ProductsService {
       .slice(0, 5);
   }
 
-  async addProductQuantity(id: string, quantity: number) {
+  async addProductQuantity(id: string, quantity: number, userId: string) {
     const product = await this.getProductById(id);
     if (!product) {
       throw new NotFoundException('Product not found');
     }
     product.quantity += quantity;
+    this.restockingService.createRestocking({
+      userId,
+      productId: product.id,
+      quantity,
+    });
     return this.productRepository.save(product);
   }
 }

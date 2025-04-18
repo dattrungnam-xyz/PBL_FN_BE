@@ -22,6 +22,7 @@ import { CartsModule } from './carts/carts.module';
 import { VerifyModule } from './verify/verify.module';
 import { UserAddressModule } from './user-address/user-address.module';
 import { CartItemsModule } from './cart-items/cart-items.module';
+import { RestockingModule } from './restocking/restocking.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -43,6 +44,7 @@ import { CartItemsModule } from './cart-items/cart-items.module';
     VerifyModule,
     UserAddressModule,
     CartItemsModule,
+    RestockingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

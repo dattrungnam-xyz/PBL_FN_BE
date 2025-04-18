@@ -15,6 +15,7 @@ import { Order } from '../../orders/entity/order.entity';
 import { Cart } from '../../carts/entity/cart.entity';
 import { Review } from '../../reviews/entity/review.entity';
 import { UserAddress } from '../../user-address/entity/userAddress.entity';
+import { Restocking } from '../../restocking/entity/restocking.entity';
 @Entity()
 export class User {
   constructor(partial?: Partial<User>) {
@@ -94,6 +95,9 @@ export class User {
 
   @OneToMany(() => UserAddress, (userAddress) => userAddress.user)
   addresses: UserAddress[];
+
+  @OneToMany(() => Restocking, (restocking) => restocking.user)
+  restockings: Restocking[];
 
   storeId: string;
 }
