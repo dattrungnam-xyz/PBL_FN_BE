@@ -4,8 +4,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entity/user.entity';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import { PaginatedUser, User } from './entity/user.entity';
+import { Brackets, In, IsNull, Not, Repository } from 'typeorm';
 import { UpdateProfileDTO } from './input/updateProfile.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import * as bcrypt from 'bcrypt';
@@ -14,6 +14,7 @@ import { Role } from '../common/type/role.type';
 import { UpdateRoleDTO } from './input/updateRole.dto';
 import { OrderStatusType } from '../common/type/orderStatus.type';
 import { PaymentStatusType } from '../common/type/paymentStatus.type';
+import { paginate } from '../pagination/paginator';
 
 @Injectable()
 export class UsersService {
@@ -53,16 +54,24 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    user.isActive = true;
-    return await this.userRepository.save(user);
+    return await this.userRepository.save(
+      new User({
+        ...user,
+        isActive: !user.isActive,
+      }),
+    );
   }
   async deactiveUser(id: string) {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    user.isActive = false;
-    return await this.userRepository.save(user);
+    return await this.userRepository.save(
+      new User({
+        ...user,
+        isActive: !user.isActive,
+      }),
+    );
   }
   async deleteUser(id: string) {
     const user = await this.userRepository.findOneBy({ id });
@@ -119,7 +128,11 @@ export class UsersService {
         paid: PaymentStatusType.PAID,
       })
       .andWhere('order.orderStatus NOT IN (:...status)', {
-        status: [OrderStatusType.CANCELLED, OrderStatusType.REJECTED],
+        status: [
+          OrderStatusType.CANCELLED,
+          OrderStatusType.REJECTED,
+          OrderStatusType.REFUNDED,
+        ],
       })
       .groupBy('user.id')
       .addSelect('COUNT(order.id)', 'orderCount')
@@ -146,6 +159,85 @@ export class UsersService {
           : 0,
         lastOrder: rawRow.lastOrder ? new Date(rawRow.lastOrder) : null,
       };
+    });
+  }
+
+  async getUsers({
+    limit = 15,
+    page = 1,
+    search,
+    isActive,
+  }: {
+    limit: number;
+    page: number;
+    search?: string;
+    isActive?: boolean;
+  }) {
+    // Subquery để tính tổng tiền mỗi user
+    const subQb = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.orders', 'order')
+      .where('user.deletedAt IS NULL')
+      .andWhere('order.orderStatus NOT IN (:...excludedStatuses)', {
+        excludedStatuses: [
+          OrderStatusType.CANCELLED,
+          OrderStatusType.REJECTED,
+          OrderStatusType.REFUNDED,
+        ],
+      })
+      .select('user.id', 'userId')
+      .addSelect('SUM(order.totalPrice - order.shippingFee)', 'totalOrderValue')
+      .groupBy('user.id');
+
+    // Truy vấn chính, join với subquery để lấy tổng tiền
+    let qb = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.seller', 'seller')
+      .leftJoinAndSelect('user.reviews', 'review')
+      .leftJoinAndSelect('review.product', 'product')
+      .leftJoinAndSelect('user.orders', 'order')
+      .leftJoinAndSelect('order.payment', 'payment')
+      .leftJoin(
+        '(' + subQb.getQuery() + ')',
+        'orderTotal',
+        'orderTotal.userId = user.id',
+      )
+      .addSelect('orderTotal.totalOrderValue', 'totalOrderValue')
+      .where('user.deletedAt IS NULL')
+      .andWhere('seller.deletedAt IS NULL')
+      .orderBy('totalOrderValue', 'DESC')
+      .setParameters(subQb.getParameters());
+
+    if (search) {
+      qb = qb.andWhere(
+        new Brackets((qb) => {
+          qb.where('user.name LIKE :search', { search: `%${search}%` })
+            .orWhere('user.email LIKE :search', { search: `%${search}%` })
+            .orWhere('user.phone LIKE :search', { search: `%${search}%` });
+        }),
+      );
+    }
+    if (isActive === false) {
+      qb = qb.andWhere('user.isActive = :isActive', { isActive: false });
+    }
+
+    return await paginate<User, PaginatedUser>(qb, PaginatedUser, {
+      limit,
+      page,
+      total: true,
+    });
+  }
+
+  async getUser(id: string) {
+    return await this.userRepository.findOne({
+      where: { id },
+      relations: [
+        'seller',
+        'reviews',
+        'reviews.product',
+        'orders',
+        'addresses',
+      ],
     });
   }
 }

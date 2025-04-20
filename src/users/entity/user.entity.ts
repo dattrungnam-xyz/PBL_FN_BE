@@ -16,6 +16,7 @@ import { Cart } from '../../carts/entity/cart.entity';
 import { Review } from '../../reviews/entity/review.entity';
 import { UserAddress } from '../../user-address/entity/userAddress.entity';
 import { Restocking } from '../../restocking/entity/restocking.entity';
+import { Paginated } from '../../pagination/paginator';
 @Entity()
 export class User {
   constructor(partial?: Partial<User>) {
@@ -101,3 +102,5 @@ export class User {
 
   storeId: string;
 }
+
+export class PaginatedUser extends Paginated<User>(User) {}

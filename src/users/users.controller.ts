@@ -2,10 +2,13 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
+  Query,
   UnauthorizedException,
   UploadedFile,
   UseGuards,
@@ -24,6 +27,7 @@ import { UpdatePasswordDTO } from './input/updatePassword.dto';
 import { UpdateRoleDTO } from './input/updateRole.dto';
 
 @Controller('users')
+@UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
@@ -41,22 +45,24 @@ export class UsersController {
   }
 
   @Get()
-  @Roles(Role.ADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  async getListUser() {
-    return await this.usersService.getListUser();
+  @UseGuards(JwtAuthGuard)
+  async getListUser(
+    @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('search') search?: string,
+    @Query('isActive') isActive?: boolean,
+  ) {
+    return await this.usersService.getUsers({ limit, page, search, isActive });
   }
 
   @Patch('active/:id')
-  @Roles(Role.ADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard)
   async activeUser(@Param('id') id: string) {
     return await this.usersService.activeUser(id);
   }
 
   @Patch('deactive/:id')
-  @Roles(Role.ADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard)
   async deactiveUser(@Param('id') id: string) {
     return await this.usersService.deactiveUser(id);
   }
@@ -136,5 +142,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   async getTopCustomers(@CurrentUser() user: User) {
     return this.usersService.getTopCustomers(user.seller.id);
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  async getUser(@Param('id') id: string) {
+    return await this.usersService.getUser(id);
   }
 }

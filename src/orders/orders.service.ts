@@ -372,8 +372,6 @@ export class OrdersService {
           In([
             OrderStatusType.CANCELLED,
             OrderStatusType.REJECTED,
-            OrderStatusType.REQUIRE_CANCEL,
-            OrderStatusType.REQUIRE_REFUND,
             OrderStatusType.REFUNDED,
           ]),
         ),
@@ -389,8 +387,6 @@ export class OrdersService {
           In([
             OrderStatusType.CANCELLED,
             OrderStatusType.REJECTED,
-            OrderStatusType.REQUIRE_CANCEL,
-            OrderStatusType.REQUIRE_REFUND,
             OrderStatusType.REFUNDED,
           ]),
         ),
@@ -541,7 +537,11 @@ export class OrdersService {
             payment: { paymentStatus: PaymentStatusType.PAID },
             createdAt: MoreThan(startDate),
             orderStatus: Not(
-              In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+              In([
+                OrderStatusType.CANCELLED,
+                OrderStatusType.REJECTED,
+                OrderStatusType.REFUNDED,
+              ]),
             ),
           },
         },
@@ -594,7 +594,11 @@ export class OrdersService {
         seller: { id: sellerId },
         payment: { paymentStatus: PaymentStatusType.PAID },
         orderStatus: Not(
-          In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+          In([
+            OrderStatusType.CANCELLED,
+            OrderStatusType.REJECTED,
+            OrderStatusType.REFUNDED,
+          ]),
         ),
       },
       relations: ['user', 'orderDetails', 'orderDetails.review'],
