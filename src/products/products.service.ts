@@ -235,4 +235,31 @@ export class ProductsService {
     });
     return this.productRepository.save(product);
   }
+
+  async handleVerifyProduct(id: string) {
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['verify'],
+    });
+    product.verifyOcopStatus = VerifyOCOPStatus.VERIFIED;
+    return this.productRepository.save(product);
+  }
+
+  async handleRejectVerifyProduct(id: string, verifyId: string) {
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['verify'],
+    });
+    if (
+      product.verify.some(
+        (verify) =>
+          verify.id !== verifyId && verify.status === VerifyOCOPStatus.VERIFIED,
+      )
+    ) {
+      product.verifyOcopStatus = VerifyOCOPStatus.VERIFIED;
+    } else {
+      product.verifyOcopStatus = VerifyOCOPStatus.REJECTED;
+    }
+    return this.productRepository.save(product);
+  }
 }

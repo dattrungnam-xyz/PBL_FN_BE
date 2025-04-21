@@ -153,6 +153,39 @@ export class VerifyService {
     });
   }
 
+  async getVerify({
+    limit,
+    page,
+    status,
+    search,
+    storeId,
+  }: {
+    limit: number;
+    page: number;
+    status?: VerifyOCOPStatus;
+    search?: string;
+    storeId?: string;
+  }) {
+    const qb = this.verifyRepository.createQueryBuilder('verify');
+    qb.leftJoinAndSelect('verify.products', 'products');
+    qb.leftJoinAndSelect('products.seller', 'seller');
+    if (storeId) {
+      qb.where('seller.id = :storeId', { storeId });
+    }
+    if (status) {
+      qb.andWhere('verify.status = :status', { status });
+    }
+    if (search) {
+      qb.andWhere('verify.productName LIKE :search', { search: `%${search}%` });
+    }
+    qb.orderBy('verify.createdAt', 'DESC');
+    return await paginate<Verify, PaginatedVerify>(qb, PaginatedVerify, {
+      limit,
+      page,
+      total: true,
+    });
+  }
+
   async getAllVerify({
     limit,
     page,
@@ -173,5 +206,32 @@ export class VerifyService {
       page,
       total: true,
     });
+  }
+
+  async approveVerify(id: string) {
+    const verify = await this.verifyRepository.findOne({
+      where: { id },
+      relations: ['products'],
+    });
+    verify.status = VerifyOCOPStatus.VERIFIED;
+    verify.rejectReason = '';
+    verify.products.forEach((product) => {
+      this.productService.handleVerifyProduct(product.id)
+    });
+
+    return this.verifyRepository.save(verify);
+  }
+
+  async rejectVerify(id: string, reason: string) {
+    const verify = await this.verifyRepository.findOne({
+      where: { id },
+      relations: ['products'],
+    });
+    verify.status = VerifyOCOPStatus.REJECTED;
+    verify.rejectReason = reason;
+    verify.products.forEach((product) => {
+      this.productService.handleRejectVerifyProduct(product.id, verify.id)
+    });
+    return this.verifyRepository.save(verify);
   }
 }

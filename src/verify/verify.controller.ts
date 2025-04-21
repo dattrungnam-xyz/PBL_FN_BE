@@ -10,6 +10,7 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  Patch,
 } from '@nestjs/common';
 import { VerifyService } from './verify.service';
 import { CreateVerifyDTO } from './dto/createVerify.dto';
@@ -47,10 +48,22 @@ export class VerifyController {
     return this.verifyService.createVerify(user.storeId, createVerifyDTO);
   }
 
-  @Get(':id')
+  @Get()
   @UseGuards(JwtAuthGuard)
-  async getVerifyById(@Param('id') id: string) {
-    return this.verifyService.getVerifyById(id);
+  async getVerify(
+    @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('status') status?: VerifyOCOPStatus,
+    @Query('search') search?: string,
+    @Query('storeId') storeId?: string,
+  ) {
+    return this.verifyService.getVerify({
+      limit,
+      page,
+      status,
+      search,
+      storeId,
+    });
   }
 
   @Get('seller/:id')
@@ -68,6 +81,11 @@ export class VerifyController {
       status,
       search,
     });
+  }
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  async getVerifyById(@Param('id') id: string) {
+    return this.verifyService.getVerifyById(id);
   }
 
   @Put(':id')
@@ -95,5 +113,15 @@ export class VerifyController {
   @UseGuards(JwtAuthGuard)
   async deleteVerifyById(@Param('id') id: string, @CurrentUser() user: User) {
     return this.verifyService.deleteVerify(id, user.storeId);
+  }
+
+  @Patch(':id/approve')
+  async approveVerifyById(@Param('id') id: string) {
+    return this.verifyService.approveVerify(id);
+  }
+
+  @Patch(':id/reject')
+  async rejectVerifyById(@Param('id') id: string, @Body('reason') reason: string) {
+    return this.verifyService.rejectVerify(id, reason);
   }
 }
