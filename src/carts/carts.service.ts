@@ -61,6 +61,9 @@ export class CartsService {
       const newCartItem = new CartItems();
       newCartItem.product = product;
       newCartItem.quantity = quantity;
+      if (!existingCart.items) {
+        existingCart.items = [];
+      }
       existingCart.items.push(newCartItem);
     }
 

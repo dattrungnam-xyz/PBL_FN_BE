@@ -181,6 +181,12 @@ export class OrdersController {
     return this.ordersService.getRevenueByTypeAndCategory(user, type);
   }
 
+  @Get('analysis/revenue-five-month')
+  @UseGuards(JwtAuthGuard)
+  async getRevenueFiveMonth(@CurrentUser() user: User) {
+    return this.ordersService.getRevenueFiveMonth(user.seller.id);
+  }
+
   @Get('analysis/order')
   @UseGuards(JwtAuthGuard)
   async getOrderCount(
@@ -215,10 +221,9 @@ export class OrdersController {
     return this.ordersService.getCustomerCountByType(user.seller.id, type);
   }
 
-  @Get("customers/statistics")
+  @Get('customers/statistics')
   @UseGuards(JwtAuthGuard)
   async getCustomerStatistics(@CurrentUser() user: User) {
     return this.ordersService.getCustomerStatistics(user.seller.id);
   }
-
 }

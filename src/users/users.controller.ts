@@ -144,6 +144,27 @@ export class UsersController {
     return this.usersService.getTopCustomers(user.seller.id);
   }
 
+  @Get('count-by-province')
+  @UseGuards(JwtAuthGuard)
+  async getCustomerCountGroupByProvince(@CurrentUser() user: User) {
+    return this.usersService.getCustomerCountGroupByProvince(user.seller.id);
+  }
+
+  @Get('customers')
+  @UseGuards(JwtAuthGuard)
+  async getCustomers(
+    @CurrentUser() user: User,
+    @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('search') search?: string,
+  ) {
+    return this.usersService.getCustomers(user.seller.id, {
+      limit,
+      page,
+      search,
+    });
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   async getUser(@Param('id') id: string) {

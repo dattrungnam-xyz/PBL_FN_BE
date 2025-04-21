@@ -534,7 +534,6 @@ export class OrdersService {
           },
           order: {
             seller: { id: user.seller.id },
-            payment: { paymentStatus: PaymentStatusType.PAID },
             createdAt: MoreThan(startDate),
             orderStatus: Not(
               In([
@@ -560,10 +559,13 @@ export class OrdersService {
           },
           order: {
             seller: { id: user.seller.id },
-            payment: { paymentStatus: PaymentStatusType.PAID },
             createdAt: Between(startDatePreviousCycle, startDate),
             orderStatus: Not(
-              In([OrderStatusType.CANCELLED, OrderStatusType.REJECTED]),
+              In([
+                OrderStatusType.CANCELLED,
+                OrderStatusType.REJECTED,
+                OrderStatusType.REFUNDED,
+              ]),
             ),
           },
         },
@@ -628,12 +630,79 @@ export class OrdersService {
     res.totalCustomers = customerOrderCount.size;
     const satisfiedCustomer = listCustomer.filter((customer) =>
       customer.orderDetails.some(
-        (orderDetail) => orderDetail.review.rating >= 4,
+        (orderDetail) => orderDetail.review?.rating >= 4,
       ),
     );
     res.highlyRatedCustomers = new Set(
       satisfiedCustomer.map((customer) => customer.user.id),
     ).size;
     return res;
+  }
+
+  async getRevenueFiveMonth(sellerId: string) {
+    const endDate = new Date();
+    endDate.setDate(1);
+    endDate.setMonth(endDate.getMonth() + 1);
+    endDate.setHours(0, 0, 0, 0);
+
+    const startDate = new Date(endDate);
+    startDate.setMonth(startDate.getMonth() - 5);
+
+    const result = await this.orderRepository
+      .createQueryBuilder('order')
+      .select([
+        "DATE_FORMAT(order.createdAt, '%Y-%m') as month",
+        'SUM(order.totalPrice - order.shippingFee) as totalRevenue',
+        'COUNT(order.id) as totalOrders',
+      ])
+      .where('order.seller.id = :sellerId', { sellerId })
+      .andWhere(
+        'order.createdAt >= :startDate AND order.createdAt < :endDate',
+        {
+          startDate,
+          endDate,
+        },
+      )
+      .andWhere('order.orderStatus NOT IN (:...statuses)', {
+        statuses: [
+          OrderStatusType.CANCELLED,
+          OrderStatusType.REJECTED,
+          OrderStatusType.REFUNDED,
+        ],
+      })
+      .groupBy("DATE_FORMAT(order.createdAt, '%Y-%m')")
+      .orderBy("DATE_FORMAT(order.createdAt, '%Y-%m')", 'ASC')
+      .getRawMany();
+
+    const months: string[] = [];
+    const now = new Date(endDate);
+    now.setMonth(now.getMonth());
+    for (let i = 4; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(d.toISOString().slice(0, 7));
+    }
+
+    const resultMap = new Map<
+      string,
+      { totalRevenue: number; totalOrders: number }
+    >();
+    result.forEach((item) => {
+      resultMap.set(item.month, {
+        totalRevenue: Number(item.totalRevenue) || 0,
+        totalOrders: Number(item.totalOrders) || 0,
+      });
+    });
+
+    return months.map((month) => {
+      const data = resultMap.get(month);
+      return {
+        month,
+        totalRevenue: data?.totalRevenue ?? 0,
+        totalOrders: data?.totalOrders ?? 0,
+        revenuePerCustomer: data?.totalRevenue
+          ? data.totalRevenue / data.totalOrders
+          : 0,
+      };
+    });
   }
 }

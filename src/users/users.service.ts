@@ -139,7 +139,7 @@ export class UsersService {
       .addSelect('AVG(review.rating)', 'averageRating')
       .addSelect('SUM(order.totalPrice - order.shippingFee)', 'totalOrder')
       .addSelect('MAX(order.createdAt)', 'lastOrder')
-      .orderBy('orderCount', 'DESC')
+      .orderBy('totalOrder', 'DESC')
       .limit(5)
       .getRawAndEntities();
     return listCustomer.raw.map((rawRow, index) => {
@@ -173,7 +173,6 @@ export class UsersService {
     search?: string;
     isActive?: boolean;
   }) {
-    // Subquery để tính tổng tiền mỗi user
     const subQb = this.userRepository
       .createQueryBuilder('user')
       .leftJoin('user.orders', 'order')
@@ -189,7 +188,6 @@ export class UsersService {
       .addSelect('SUM(order.totalPrice - order.shippingFee)', 'totalOrderValue')
       .groupBy('user.id');
 
-    // Truy vấn chính, join với subquery để lấy tổng tiền
     let qb = this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.seller', 'seller')
@@ -238,6 +236,66 @@ export class UsersService {
         'orders',
         'addresses',
       ],
+    });
+  }
+
+  async getCustomerCountGroupByProvince(sellerId: string) {
+    const listCustomer = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.orders', 'order')
+      .leftJoin('order.payment', 'payment')
+      .leftJoin('order.seller', 'seller')
+      .leftJoin('order.orderDetails', 'orderDetails')
+      .leftJoin('order.address', 'address')
+      .leftJoinAndSelect('orderDetails.review', 'review')
+      .where('seller.id = :sellerId', { sellerId })
+      .select(['address.province', 'COUNT(user.id) as customerCount'])
+      .groupBy('address.province')
+      .orderBy('customerCount', 'DESC')
+      .limit(5)
+      .getRawMany();
+    return listCustomer.map((row) => ({
+      province: row.address_province,
+      customerCount: parseInt(row.customerCount, 10),
+    }));
+  }
+
+  async getCustomers(
+    sellerId: string,
+    {
+      limit = 15,
+      page = 1,
+      search,
+    }: {
+      limit: number;
+      page: number;
+      search?: string;
+    },
+  ) {
+    const qb = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.orders', 'order')
+      .leftJoinAndSelect('order.payment', 'payment')
+      .leftJoinAndSelect('order.seller', 'seller')
+      .leftJoinAndSelect('order.orderDetails', 'orderDetails')
+      .leftJoinAndSelect('order.address', 'address')
+      .leftJoinAndSelect('user.reviews', 'review')
+      .where('seller.id = :sellerId', { sellerId });
+
+    if (search) {
+      qb.andWhere(
+        new Brackets((qb) => {
+          qb.where('user.name LIKE :search', { search: `%${search}%` })
+            .orWhere('user.email LIKE :search', { search: `%${search}%` })
+            .orWhere('user.phone LIKE :search', { search: `%${search}%` });
+        }),
+      );
+    }
+
+    return await paginate<User, PaginatedUser>(qb, PaginatedUser, {
+      limit,
+      page,
+      total: true,
     });
   }
 }

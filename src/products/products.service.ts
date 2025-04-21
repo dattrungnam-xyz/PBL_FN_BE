@@ -16,6 +16,7 @@ import { paginate } from '../pagination/paginator';
 import { VerifyOCOPStatus } from '../common/type/verifyOCOP.type';
 import { getDateCycle } from '../utils/generateDateCycle';
 import { RestockingService } from '../restocking/restocking.service';
+import { OrderStatusType } from '../common/type/orderStatus.type';
 @Injectable()
 export class ProductsService {
   constructor(
@@ -73,6 +74,7 @@ export class ProductsService {
         'reviews.orderDetail',
         'reviews.orderDetail.product',
         'orderDetails',
+        'verify',
       ],
     });
     if (!product) {
@@ -202,6 +204,18 @@ export class ProductsService {
         'orderDetail',
         'orderDetail.createdAt >= :startDate',
         { startDate },
+      )
+      .leftJoin(
+        'orderDetail.order',
+        'order',
+        'order.orderStatus NOT IN (:...excludedStatuses)',
+        {
+          excludedStatuses: [
+            OrderStatusType.CANCELLED,
+            OrderStatusType.REJECTED,
+            OrderStatusType.REFUNDED,
+          ],
+        },
       )
       .where('seller.id = :sellerId', { sellerId })
       .groupBy('product.id')
