@@ -41,6 +41,6 @@ export class CartItemsService {
     if (!cartItem) {
       throw new NotFoundException('Cart item not found');
     }
-    await this.cartItemsRepository.softDelete(cartItem.id);
+    await this.cartItemsRepository.delete(cartItem.id);
   }
 }
