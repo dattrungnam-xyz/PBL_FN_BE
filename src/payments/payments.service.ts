@@ -1,7 +1,7 @@
 import * as moment from 'moment';
 import axios from 'axios';
 import * as CryptoJS from 'crypto-js';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment } from './entity/payment.entity';
@@ -9,12 +9,16 @@ import { CreatePaymentDTO } from './dto/createPayment.dto';
 import { CreateZaloPaymentDTO } from './dto/createZaloPayment.dto';
 import { ZaloPayCallbackDTO } from './dto/zaloPayCallback.dto';
 import { PaymentStatusType } from '../common/type/paymentStatus.type';
+import { OrdersService } from '../orders/orders.service';
+import { OrderStatusType } from '../common/type/orderStatus.type';
 
 @Injectable()
 export class PaymentsService {
   constructor(
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
+    @Inject(forwardRef(() => OrdersService))
+    private readonly orderService: OrdersService,
   ) {}
 
   async createPayment(createPaymentDTO: CreatePaymentDTO) {
@@ -118,10 +122,14 @@ export class PaymentsService {
         let dataJson = JSON.parse(data, process.env.ZALOPAY_KEY2 as any);
         const payment = await this.paymentRepository.findOne({
           where: { transactionId: dataJson['app_trans_id'] },
+          relations: ['order'],
         });
         if (payment) {
           payment.paymentStatus = PaymentStatusType.PAID;
           await this.paymentRepository.save(payment);
+          await this.orderService.updateOrderStatus(payment.order.id, {
+            status: OrderStatusType.PENDING,
+          });
         }
         result.return_code = 1;
         result.return_message = 'success';

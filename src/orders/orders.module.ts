@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -17,7 +17,7 @@ import { ProductsModule } from '../products/products.module';
     UsersModule,
     SellersModule,
     UserAddressModule,
-    PaymentsModule,
+    forwardRef(() => PaymentsModule),
     OrderDetailsModule,
     CloudinaryModule,
     ProductsModule,

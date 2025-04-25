@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  forwardRef,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, LessThan, MoreThan, Not, Repository } from 'typeorm';
@@ -38,6 +40,7 @@ export class OrdersService {
     private readonly userService: UsersService,
     private readonly userAddressService: UserAddressService,
     private readonly sellerService: SellersService,
+    @Inject(forwardRef(() => PaymentsService))
     private readonly paymentService: PaymentsService,
     private readonly orderDetailService: OrderDetailsService,
     private readonly productService: ProductsService,
