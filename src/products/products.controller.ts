@@ -78,6 +78,11 @@ export class ProductsController {
     return this.productsService.getAllProducts();
   }
 
+  @Get('count/category')
+  getCountCategory(@Query('sellerId') sellerId?: string) {
+    return this.productsService.getCountCategory(sellerId);
+  }
+
   @Get('seller/top-rating')
   @UseGuards(JwtAuthGuard)
   getTopSellReviews(

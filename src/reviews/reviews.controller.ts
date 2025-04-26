@@ -67,6 +67,13 @@ export class ReviewsController {
   async getRecentReviews(@CurrentUser() user: User) {
     return this.reviewsService.getRecentReviews(user.seller.id);
   }
+
+  @Get('average')
+  @UseGuards(JwtAuthGuard)
+  async getAverageReviews() {
+    return this.reviewsService.getAverageReviews();
+  }
+
   @Get('seller')
   @UseGuards(JwtAuthGuard)
   async getSellerReviews(

@@ -52,6 +52,21 @@ export class OrdersController {
     return this.ordersService.getOrdersByUserId(user.id);
   }
 
+  @Get("list")
+  @UseGuards(JwtAuthGuard)
+  async getListOrder(
+    @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+  ) {
+    return this.ordersService.getListOrder(limit, page);
+  }
+
+  @Get("revenue")
+  @UseGuards(JwtAuthGuard)
+  async getAdminRevenue() {
+    return this.ordersService.getAdminRevenue();
+  }
+
   @Get('seller')
   @UseGuards(JwtAuthGuard)
   async getUnpaidShopOrder(

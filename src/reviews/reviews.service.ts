@@ -242,4 +242,10 @@ export class ReviewsService {
       total: true,
     });
   }
+  async getAverageReviews() {
+    const reviews = await this.reviewRepository.find({});
+    return (
+      reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+    );
+  }
 }

@@ -276,4 +276,23 @@ export class ProductsService {
     }
     return this.productRepository.save(product);
   }
+
+  async getCountCategory(sellerId?: string) {
+    const listCatefogry = [
+      CategoryType.FOOD,
+      CategoryType.BEVERAGE,
+      CategoryType.HANDICRAFTS_DECORATION,
+      CategoryType.HERB,
+    ];
+    const allPromise = listCatefogry.map((category) =>
+      this.productRepository.count({
+        where: { category, seller: sellerId ? { id: sellerId } : undefined },
+      }),
+    );
+    const count = await Promise.all(allPromise);
+    return count.map((c, index) => ({
+      category: listCatefogry[index],
+      count: c,
+    }));
+  }
 }

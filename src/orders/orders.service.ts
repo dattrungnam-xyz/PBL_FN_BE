@@ -708,4 +708,39 @@ export class OrdersService {
       };
     });
   }
+
+  async getListOrder(limit: number, page: number) {
+    const qb = this.orderRepository.createQueryBuilder('order');
+    qb.where('order.orderStatus NOT IN (:...statuses)', {
+      statuses: [
+        OrderStatusType.CANCELLED,
+        OrderStatusType.REJECTED,
+        OrderStatusType.REFUNDED,
+      ],
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+    return await paginate<Order, PaginatedOrder>(qb, PaginatedOrder, {
+      limit,
+      page,
+      total: true,
+    });
+  }
+
+  async getAdminRevenue() {
+    const listOrder = await this.orderRepository.find({
+      where: {
+        orderStatus: Not(
+          In([
+            OrderStatusType.CANCELLED,
+            OrderStatusType.REJECTED,
+            OrderStatusType.REFUNDED,
+          ]),
+        ),
+      },
+      relations: ['orderDetails', 'payment', 'address', 'seller', 'user'],
+    });
+    return listOrder.reduce((acc, order) => acc + order.totalPrice - order.shippingFee, 0);
+  }
 }
