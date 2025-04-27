@@ -17,6 +17,7 @@ import { Review } from '../../reviews/entity/review.entity';
 import { UserAddress } from '../../user-address/entity/userAddress.entity';
 import { Restocking } from '../../restocking/entity/restocking.entity';
 import { Paginated } from '../../pagination/paginator';
+import { SearchHistory } from '../../search-history/entities/search-history.entity';
 @Entity()
 export class User {
   constructor(partial?: Partial<User>) {
@@ -99,6 +100,9 @@ export class User {
 
   @OneToMany(() => Restocking, (restocking) => restocking.user)
   restockings: Restocking[];
+
+  @OneToMany(() => SearchHistory, (searchHistory) => searchHistory.user)
+  searchHistories: SearchHistory[];
 
   storeId: string;
 }

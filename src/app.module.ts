@@ -23,6 +23,7 @@ import { VerifyModule } from './verify/verify.module';
 import { UserAddressModule } from './user-address/user-address.module';
 import { CartItemsModule } from './cart-items/cart-items.module';
 import { RestockingModule } from './restocking/restocking.module';
+import { SearchHistoryModule } from './search-history/search-history.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -45,6 +46,7 @@ import { RestockingModule } from './restocking/restocking.module';
     UserAddressModule,
     CartItemsModule,
     RestockingModule,
+    SearchHistoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
