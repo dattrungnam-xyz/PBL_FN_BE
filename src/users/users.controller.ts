@@ -8,6 +8,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Post,
   Query,
   UnauthorizedException,
   UploadedFile,
@@ -25,6 +26,7 @@ import { Role } from '../common/type/role.type';
 import { RolesGuard } from '../auth/roles.guard';
 import { UpdatePasswordDTO } from './input/updatePassword.dto';
 import { UpdateRoleDTO } from './input/updateRole.dto';
+import { AddViewProductDto } from './input/addViewProduct.dto';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -163,6 +165,15 @@ export class UsersController {
       page,
       search,
     });
+  }
+
+  @Post('add-view-product')
+  @UseGuards(JwtAuthGuard)
+  async addViewProduct(
+    @Body() addViewProductDTO: AddViewProductDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.usersService.addViewProduct(addViewProductDTO, user.id);
   }
 
   @Get(':id')

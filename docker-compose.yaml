@@ -4,7 +4,7 @@ services:
   mysql:
     image: mysql:8.0.23
     command: --default-authentication-plugin=mysql_native_password
-    restart: always
+    restart: always 
     ports:
       - 3306:3306
     environment:
@@ -22,5 +22,15 @@ services:
       - mysql
     networks:
       - app
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - 6379:6379
+    networks:
+      - app
+
+
 networks:
   app:

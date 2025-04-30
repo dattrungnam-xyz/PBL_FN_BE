@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -19,6 +20,7 @@ import { Verify } from '../../verify/entity/verify.entity';
 import { CartItems } from '../../cart-items/entity/cartItems.entity';
 import { OrderDetail } from '../../order-details/entity/orderDetail.entity';
 import { Restocking } from '../../restocking/entity/restocking.entity';
+import { User } from '../../users/entity/user.entity';
 @Entity()
 export class Product {
   constructor(partial?: Partial<Product>) {
@@ -98,6 +100,10 @@ export class Product {
 
   @OneToMany(() => Restocking, (restocking) => restocking.product)
   restockings: Restocking[];
+
+  @ManyToMany(() => User, (user) => user.viewHistorys)
+  @JoinTable()
+  userView: User;
 }
 
 export class PaginatedProduct extends Paginated<Product>(Product) {}

@@ -15,12 +15,16 @@ import { UpdateRoleDTO } from './input/updateRole.dto';
 import { OrderStatusType } from '../common/type/orderStatus.type';
 import { PaymentStatusType } from '../common/type/paymentStatus.type';
 import { paginate } from '../pagination/paginator';
+import { AddViewProductDto } from './input/addViewProduct.dto';
+import { Product } from '../products/entity/product.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly cloudinaryService: CloudinaryService,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
   ) {}
 
   async updateProfile(user: User, updateProfileDTO: UpdateProfileDTO) {
@@ -297,5 +301,30 @@ export class UsersService {
       page,
       total: true,
     });
+  }
+
+  async addViewProduct(addViewProductDTO: AddViewProductDto, userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['viewHistorys'],
+    });
+    const product = await this.productRepository.findOneBy({
+      id: addViewProductDTO.productId,
+    });
+    if (!user || !product) {
+      throw new NotFoundException('User or product not found');
+    }
+    if (user.viewHistorys.some((view) => view.id === product.id)) {
+      return;
+    }
+    user.viewHistorys.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    if (user.viewHistorys.length >= 10) {
+      user.viewHistorys.shift();
+    }
+    user.viewHistorys.push(product);
+
+    return await this.userRepository.save(user);
   }
 }

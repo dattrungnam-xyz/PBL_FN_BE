@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToMany,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -18,6 +19,7 @@ import { UserAddress } from '../../user-address/entity/userAddress.entity';
 import { Restocking } from '../../restocking/entity/restocking.entity';
 import { Paginated } from '../../pagination/paginator';
 import { SearchHistory } from '../../search-history/entities/search-history.entity';
+import { Product } from '../../products/entity/product.entity';
 @Entity()
 export class User {
   constructor(partial?: Partial<User>) {
@@ -103,6 +105,9 @@ export class User {
 
   @OneToMany(() => SearchHistory, (searchHistory) => searchHistory.user)
   searchHistories: SearchHistory[];
+
+  @ManyToMany(() => Product, (product) => product.userView)
+  viewHistorys: Product[];
 
   storeId: string;
 }
