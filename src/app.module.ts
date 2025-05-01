@@ -24,6 +24,7 @@ import { UserAddressModule } from './user-address/user-address.module';
 import { CartItemsModule } from './cart-items/cart-items.module';
 import { RestockingModule } from './restocking/restocking.module';
 import { SearchHistoryModule } from './search-history/search-history.module';
+import { SeedDataModule } from './seedData/seedData.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -47,6 +48,7 @@ import { SearchHistoryModule } from './search-history/search-history.module';
     CartItemsModule,
     RestockingModule,
     SearchHistoryModule,
+    SeedDataModule,
   ],
   controllers: [AppController],
   providers: [AppService],

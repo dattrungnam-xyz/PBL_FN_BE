@@ -34,5 +34,6 @@ import { JwtRefreshStrategy } from './jwtRefresh.strategy';
     GoogleStrategy,
     UserDoesNotExistConstraint,
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}
