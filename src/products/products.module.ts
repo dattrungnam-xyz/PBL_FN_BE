@@ -8,6 +8,7 @@ import { SellersModule } from '../sellers/sellers.module';
 import { forwardRef } from '@nestjs/common';
 import { VerifyModule } from '../verify/verify.module';
 import { RestockingModule } from '../restocking/restocking.module';
+import { RedisModule } from '../redis/redis.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Product]),
@@ -15,6 +16,7 @@ import { RestockingModule } from '../restocking/restocking.module';
     SellersModule,
     forwardRef(() => VerifyModule),
     RestockingModule,
+    RedisModule,
   ],
   controllers: [ProductsController],
   providers: [ProductsService],

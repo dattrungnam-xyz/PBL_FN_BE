@@ -17,6 +17,7 @@ import { VerifyOCOPStatus } from '../common/type/verifyOCOP.type';
 import { getDateCycle } from '../utils/generateDateCycle';
 import { RestockingService } from '../restocking/restocking.service';
 import { OrderStatusType } from '../common/type/orderStatus.type';
+import { RedisPubService } from '../redis/redis.service';
 @Injectable()
 export class ProductsService {
   constructor(
@@ -24,6 +25,7 @@ export class ProductsService {
     private productRepository: Repository<Product>,
     private sellerService: SellersService,
     private restockingService: RestockingService,
+    private readonly redisService: RedisPubService,
   ) {}
 
   async createProduct(storeId: string | undefined, product: CreateProductDTO) {
@@ -33,17 +35,55 @@ export class ProductsService {
       throw new NotFoundException('Seller not found');
     }
     newProduct.seller = seller;
-    return this.productRepository.save(newProduct);
+
+    const pr = await this.productRepository.save(newProduct);
+
+    const cacheProduct = {
+      id: pr.id,
+      name: pr.name,
+      category: pr.category,
+      description: pr.description,
+      province: seller.province,
+      price: pr.price,
+      star: pr.star,
+      status: pr.status,
+    };
+    const payload = {
+      data: cacheProduct,
+      event:"create"
+    }
+    await this.redisService.publish('product-events', cacheProduct);
+    return pr;
   }
 
   async updateProduct(id: string, product: UpdateProductDTO) {
     const existingProduct = await this.productRepository.findOne({
       where: { id },
+      relations: ['seller'],
     });
     if (!existingProduct) {
       throw new NotFoundException('Product not found');
     }
-    const updatedProduct = await this.productRepository.update(id, product);
+
+    await this.productRepository.update(id, product);
+
+    const updatedProduct = await this.productRepository.findOne({ where: { id }, relations: ['seller'] });
+
+    const cacheProduct = {
+      id: updatedProduct.id,
+      name: updatedProduct.name,
+      category: updatedProduct.category,
+      description: updatedProduct.description,
+      province: updatedProduct?.seller?.province,
+      price: updatedProduct.price,
+      star: updatedProduct.star,
+      status: updatedProduct.status,
+    }
+    const payload = {
+      data: cacheProduct,
+      event:"update"
+    }
+    await this.redisService.publish('product-events', payload);
     return updatedProduct;
   }
 
@@ -61,6 +101,11 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
+    const payload = {
+      id: id,
+      event:"delete"
+    }
+    await this.redisService.publish("product-events", payload)
     const result = await this.productRepository.softDelete(id);
   }
 
@@ -80,6 +125,7 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
+    await this.redisService.publish('product.deleted', { id: id });
     return product;
   }
 

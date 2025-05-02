@@ -25,6 +25,7 @@ import { CartItemsModule } from './cart-items/cart-items.module';
 import { RestockingModule } from './restocking/restocking.module';
 import { SearchHistoryModule } from './search-history/search-history.module';
 import { SeedDataModule } from './seedData/seedData.module';
+import { RedisModule } from './redis/redis.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -49,6 +50,7 @@ import { SeedDataModule } from './seedData/seedData.module';
     RestockingModule,
     SearchHistoryModule,
     SeedDataModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
