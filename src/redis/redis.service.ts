@@ -7,7 +7,7 @@ export class RedisPubService implements OnModuleInit {
   private client: RedisClientType;
 
   async onModuleInit() {
-    this.client = createClient({ url: 'redis://localhost:6379' });
+    this.client = createClient({ url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}` });
     this.client.on('error', (err) => console.error('Redis Client Error', err));
     await this.client.connect();
   }
