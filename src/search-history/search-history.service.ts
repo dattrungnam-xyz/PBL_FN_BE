@@ -11,12 +11,17 @@ export class SearchHistoryService {
     @InjectRepository(SearchHistory)
     private searchHistoryRepository: Repository<SearchHistory>,
   ) {}
-  create(createSearchHistoryDto: CreateSearchHistoryDTO, userId: string) {
-    const searchHistory = this.searchHistoryRepository.create({
-      ...createSearchHistoryDto,
-      user: { id: userId },
-    });
-    return this.searchHistoryRepository.save(searchHistory);
+  async create(createSearchHistoryDto: CreateSearchHistoryDTO, userId: string) {
+    for (const search of createSearchHistoryDto.search) {
+      const searchHistory = this.searchHistoryRepository.create({
+        search,
+        user: { id: userId },
+      });
+      await this.searchHistoryRepository.save(searchHistory);
+    }
+    return {
+      message: 'Search history created successfully',
+    };
   }
 
   findAll() {

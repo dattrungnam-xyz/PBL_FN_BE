@@ -27,6 +27,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { UpdatePasswordDTO } from './input/updatePassword.dto';
 import { UpdateRoleDTO } from './input/updateRole.dto';
 import { AddViewProductDto } from './input/addViewProduct.dto';
+import { CreateViewHistoryDTO } from './input/createViewHistory.dto';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -180,5 +181,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   async getUser(@Param('id') id: string) {
     return await this.usersService.getUser(id);
+  }
+
+  @Post("create-view-history")
+  @UseGuards(JwtAuthGuard)
+  async createViewHistory(@Body() createViewHistoryDTO: CreateViewHistoryDTO, @CurrentUser() user: User) {
+    return this.usersService.createViewHistory(createViewHistoryDTO, user.id);
   }
 }

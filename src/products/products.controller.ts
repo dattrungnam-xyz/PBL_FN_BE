@@ -73,10 +73,36 @@ export class ProductsController {
     return this.productsService.updateProduct(id, completeBody);
   }
 
-  @Get()
-  getAllProducts() {
-    return this.productsService.getAllProducts();
-  }
+    @Get()
+    getAllProducts(
+      @Query('limit', new DefaultValuePipe(15), ParseIntPipe) limit: number,
+      @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+      @Query('search') search?: string,
+      @Query('provinces') provinces?: string,
+      @Query('categories') categories?: string,
+      @Query("minPrice") minPrice?: string,
+      @Query("maxPrice") maxPrice?: string,
+      @Query("userId") userId?: string,
+      @Query("searchHistory") searchHistory?: string,
+      @Query("viewHistory") viewHistory?: string,
+    ) {
+      const provincesArray = provinces ? provinces.split(',') : undefined;
+      const searchHistoryArray = searchHistory ? searchHistory.split(',') : undefined;
+      const viewHistoryArray = viewHistory ? viewHistory.split(',') : undefined;
+      const categoriesArray = categories ? categories.split(',') as CategoryType[] : undefined;
+      return this.productsService.getAllProducts({
+        limit,
+        page,
+        search,
+        provinces: provincesArray,
+        categories: categoriesArray,
+        minPrice,
+        maxPrice,
+        userId,
+        searchHistory: searchHistoryArray,
+        viewHistory: viewHistoryArray,
+      });
+    }
 
   @Get('count/category')
   getCountCategory(@Query('sellerId') sellerId?: string) {

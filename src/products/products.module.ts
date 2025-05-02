@@ -9,9 +9,10 @@ import { forwardRef } from '@nestjs/common';
 import { VerifyModule } from '../verify/verify.module';
 import { RestockingModule } from '../restocking/restocking.module';
 import { RedisModule } from '../redis/redis.module';
+import { User } from '../users/entity/user.entity';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Product]),
+    TypeOrmModule.forFeature([Product, User]),
     CloudinaryModule,
     SellersModule,
     forwardRef(() => VerifyModule),

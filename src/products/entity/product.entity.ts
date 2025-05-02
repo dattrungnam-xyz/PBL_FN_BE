@@ -101,9 +101,11 @@ export class Product {
   @OneToMany(() => Restocking, (restocking) => restocking.product)
   restockings: Restocking[];
 
-  @ManyToMany(() => User, (user) => user.viewHistorys)
+  @ManyToMany(() => User, (user) => user.viewHistories)
   @JoinTable()
   userView: User;
+
+  popularity?: number;
 }
 
 export class PaginatedProduct extends Paginated<Product>(Product) {}

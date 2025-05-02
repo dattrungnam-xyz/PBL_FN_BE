@@ -1,7 +1,7 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateSearchHistoryDTO {
   @IsNotEmpty()
-  @IsString()
-  search: string;
+  @IsArray()
+  search: string[];
 }

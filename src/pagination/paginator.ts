@@ -35,18 +35,32 @@ export function Paginated<T>(classRef: Type<T>) {
 export async function paginate<T, K>(
   qb: SelectQueryBuilder<T>,
   classRef: Type<K>,
-  options: PaginateOptions = {
+  options: PaginateOptions & { additionalFields?: string[] } = {
     limit: 15,
     page: 1,
   },
 ): Promise<K> {
   const offset = (options.page - 1) * options.limit;
-  const data = await qb.skip(offset).take(options.limit).getMany();
+  const { raw, entities } = await qb.skip(offset).take(options.limit).getRawAndEntities();
+
+  if (options.additionalFields?.length) {
+    entities.forEach((entity, index) => {
+      const rawItem = raw[index];
+      for (const field of options.additionalFields!) {
+        if (field in rawItem) {
+          (entity as any)[field] = rawItem[field];
+        }
+      }
+    });
+  }
+
+  const total = options.total ? await qb.getCount() : null;
+
   return new classRef({
     first: offset + 1,
-    last: offset + data.length,
+    last: offset + entities.length,
     limit: options.limit,
-    total: options.total ? await qb.getCount() : null,
-    data,
+    total,
+    data: entities,
   });
 }

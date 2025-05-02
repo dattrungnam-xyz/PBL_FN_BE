@@ -107,7 +107,7 @@ export class User {
   searchHistories: SearchHistory[];
 
   @ManyToMany(() => Product, (product) => product.userView)
-  viewHistorys: Product[];
+  viewHistories: Product[];
 
   storeId: string;
 }

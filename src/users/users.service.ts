@@ -17,6 +17,7 @@ import { PaymentStatusType } from '../common/type/paymentStatus.type';
 import { paginate } from '../pagination/paginator';
 import { AddViewProductDto } from './input/addViewProduct.dto';
 import { Product } from '../products/entity/product.entity';
+import { CreateViewHistoryDTO } from './input/createViewHistory.dto';
 
 @Injectable()
 export class UsersService {
@@ -306,7 +307,7 @@ export class UsersService {
   async addViewProduct(addViewProductDTO: AddViewProductDto, userId: string) {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['viewHistorys'],
+      relations: ['viewHistories'],
     });
     const product = await this.productRepository.findOneBy({
       id: addViewProductDTO.productId,
@@ -314,16 +315,56 @@ export class UsersService {
     if (!user || !product) {
       throw new NotFoundException('User or product not found');
     }
-    if (user.viewHistorys.some((view) => view.id === product.id)) {
+    if (user.viewHistories.some((view) => view.id === product.id)) {
       return;
     }
-    user.viewHistorys.sort((a, b) => {
+    user.viewHistories.sort((a, b) => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-    if (user.viewHistorys.length >= 10) {
-      user.viewHistorys.shift();
+    if (user.viewHistories.length >= 10) {
+      user.viewHistories.shift();
     }
-    user.viewHistorys.push(product);
+    user.viewHistories.push(product);
+
+    return await this.userRepository.save(user);
+  }
+
+  async createViewHistory(
+    createViewHistoryDTO: CreateViewHistoryDTO,
+    userId: string,
+  ) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const products = await this.productRepository.findBy({
+      id: In(createViewHistoryDTO.productIds),
+    });
+    if (products.length !== createViewHistoryDTO.productIds.length) {
+      throw new NotFoundException('Some products not found');
+    }
+    if (!user.viewHistories) {
+      user.viewHistories = [];
+    }
+    user.viewHistories.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    const newViewHistories = products.filter((product) => {
+      return !user.viewHistories.some((view) => view.id === product.id);
+    });
+    user.viewHistories = user.viewHistories.filter((view) => {
+      return !newViewHistories.some((newView) => newView.id === view.id);
+    });
+    while (
+      user.viewHistories.length &&
+      user.viewHistories.length + newViewHistories.length > 10
+    ) {
+      user.viewHistories.shift();
+    }
+    user.viewHistories.push(...newViewHistories);
 
     return await this.userRepository.save(user);
   }

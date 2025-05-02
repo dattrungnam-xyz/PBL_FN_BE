@@ -18,11 +18,15 @@ import { getDateCycle } from '../utils/generateDateCycle';
 import { RestockingService } from '../restocking/restocking.service';
 import { OrderStatusType } from '../common/type/orderStatus.type';
 import { RedisPubService } from '../redis/redis.service';
+import { User } from '../users/entity/user.entity';
+import axios from 'axios';
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     private sellerService: SellersService,
     private restockingService: RestockingService,
     private readonly redisService: RedisPubService,
@@ -50,8 +54,8 @@ export class ProductsService {
     };
     const payload = {
       data: cacheProduct,
-      event:"create"
-    }
+      event: 'create',
+    };
     await this.redisService.publish('product-events', cacheProduct);
     return pr;
   }
@@ -67,7 +71,10 @@ export class ProductsService {
 
     await this.productRepository.update(id, product);
 
-    const updatedProduct = await this.productRepository.findOne({ where: { id }, relations: ['seller'] });
+    const updatedProduct = await this.productRepository.findOne({
+      where: { id },
+      relations: ['seller'],
+    });
 
     const cacheProduct = {
       id: updatedProduct.id,
@@ -78,11 +85,11 @@ export class ProductsService {
       price: updatedProduct.price,
       star: updatedProduct.star,
       status: updatedProduct.status,
-    }
+    };
     const payload = {
       data: cacheProduct,
-      event:"update"
-    }
+      event: 'update',
+    };
     await this.redisService.publish('product-events', payload);
     return updatedProduct;
   }
@@ -103,9 +110,9 @@ export class ProductsService {
     }
     const payload = {
       id: id,
-      event:"delete"
-    }
-    await this.redisService.publish("product-events", payload)
+      event: 'delete',
+    };
+    await this.redisService.publish('product-events', payload);
     const result = await this.productRepository.softDelete(id);
   }
 
@@ -185,12 +192,225 @@ export class ProductsService {
     });
   }
 
-  async getAllProducts() {
-    return this.productRepository.find();
+  async getAllProducts({
+    search,
+    categories,
+    limit,
+    page,
+    minPrice,
+    maxPrice,
+    provinces,
+    userId,
+    searchHistory,
+    viewHistory,
+  }: {
+    search?: string;
+    categories?: CategoryType[];
+    limit: number;
+    page: number;
+    minPrice?: string;
+    maxPrice?: string;
+    provinces?: string[];
+    userId?: string;
+    searchHistory?: string[];
+    viewHistory?: string[];
+  }) {
+    console.log(
+      'call getAllProducts',
+      viewHistory,
+      searchHistory,
+      search,
+      userId,
+    );
+    if (!userId && !searchHistory && !viewHistory && !search) {
+      return this.getPopularProducts({
+        search,
+        categories,
+        limit,
+        page,
+        minPrice,
+        maxPrice,
+        provinces,
+      });
+    }
+    const user = userId
+      ? await this.userRepository.findOne({
+          where: {
+            id: userId,
+          },
+          relations: ['searchHistories', 'viewHistories'],
+        })
+      : null;
+    if (
+      !user?.viewHistories?.length &&
+      !user?.searchHistories?.length &&
+      !search &&
+      !viewHistory &&
+      !searchHistory
+    ) {
+      return this.getPopularProducts({
+        search,
+        categories,
+        limit,
+        page,
+        minPrice,
+        maxPrice,
+        provinces,
+      });
+    }
+    console.log('user', user);
+    if (user) {
+      return this.getRecommendProducts({
+        search,
+        categories,
+        limit,
+        page,
+        provinces,
+        searchHistory: user?.searchHistories?.map((item) => item.search),
+        viewHistory: user?.viewHistories?.map((item) => item.id),
+        minPrice,
+        maxPrice,
+      });
+    }
+    return this.getRecommendProducts({
+      search,
+      categories,
+      limit,
+      page,
+      provinces,
+      searchHistory,
+      viewHistory,
+      minPrice,
+      maxPrice,
+    });
   }
 
-  async getProductsByCategory(category: CategoryType) {
-    return this.productRepository.find({ where: { category } });
+  async getPopularProducts({
+    search,
+    categories,
+    limit,
+    page,
+    minPrice,
+    maxPrice,
+    provinces,
+  }: {
+    search?: string;
+    categories?: CategoryType[];
+    limit: number;
+    page: number;
+    minPrice?: string;
+    maxPrice?: string;
+    provinces?: string[];
+  }) {
+    console.log('call popularity');
+
+    const qb = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.seller', 'seller')
+      .leftJoinAndSelect('product.reviews', 'review')
+      .leftJoin('product.orderDetails', 'orderDetail')
+      .leftJoin('orderDetail.order', 'order')
+      .where('seller.deletedAt IS NULL')
+      .andWhere('product.deletedAt IS NULL')
+      .addSelect(
+        `SUM(CASE WHEN \`order\`.\`orderStatus\` NOT IN (:...excludedStatuses) THEN \`orderDetail\`.\`quantity\` ELSE 0 END)`,
+        'soldCount',
+      )
+      .groupBy('product.id')
+      .addGroupBy('seller.id')
+      .addGroupBy('review.id')
+      .orderBy('soldCount', 'DESC')
+      .setParameter('excludedStatuses', [
+        OrderStatusType.CANCELLED,
+        OrderStatusType.REJECTED,
+        OrderStatusType.REFUNDED,
+      ]);
+
+    if (search) {
+      qb.andWhere('product.name LIKE :search', { search: `%${search}%` });
+    }
+    if (categories) {
+      qb.andWhere('product.category IN (:...categories)', { categories });
+    }
+    if (minPrice) {
+      qb.andWhere('product.price >= :minPrice', { minPrice });
+    }
+    if (maxPrice) {
+      qb.andWhere('product.price <= :maxPrice', { maxPrice });
+    }
+    if (provinces) {
+      qb.andWhere('seller.province IN (:...provinces)', { provinces });
+    }
+
+    return await paginate<Product, PaginatedProduct>(qb, PaginatedProduct, {
+      limit,
+      page,
+      total: true,
+      additionalFields: ['soldCount'],
+    });
+  }
+
+  async getRecommendProducts({
+    search,
+    categories,
+    limit,
+    page,
+    provinces,
+    searchHistory,
+    viewHistory,
+    minPrice,
+    maxPrice,
+  }: {
+    search?: string;
+    categories?: CategoryType[];
+    limit: number;
+    page: number;
+    provinces?: string[];
+    minPrice?: string;
+    maxPrice?: string;
+    searchHistory?: string[];
+    viewHistory?: string[];
+  }) {
+    const payload = {
+      search_history: !search ? searchHistory : [],
+      viewed_product_ids: !search ? viewHistory : [],
+      min_price: minPrice ? minPrice : 0,
+      max_price: maxPrice ? maxPrice : undefined,
+      provinces: provinces,
+      categories: categories,
+      page: page,
+      page_size: limit,
+      search: search,
+    };
+    console.log('call recommend', payload);
+    const res = await axios.post(
+      `${process.env.RECOMMEND_SERVICE_URL}/recommend`,
+      payload,
+    );
+
+    const res_page = res.data.page;
+    const res_total = res.data.total;
+    const res_page_size = res.data.page_size;
+    const listId = res.data.recommended_products?.map((item: any) => item.id);
+
+    const res_products = await this.productRepository.find({
+      where: { id: In(listId) },
+      relations: [
+        'seller',
+        'reviews',
+        'orderDetails',
+        'orderDetails.order',
+        'verify',
+      ],
+    });
+
+    return {
+      first: res_page * res_page_size + 1,
+      last: res_page * res_page_size + res_page_size,
+      limit: res_page_size,
+      total: res_total,
+      data: res_products,
+    };
   }
 
   async getProductsByStatus(status: SellProductType) {
