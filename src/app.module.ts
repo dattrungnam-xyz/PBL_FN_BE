@@ -27,6 +27,7 @@ import { SearchHistoryModule } from './search-history/search-history.module';
 import { SeedDataModule } from './seedData/seedData.module';
 import { RedisModule } from './redis/redis.module';
 import { UserViewHistoriesModule } from './user-view-histories/user-view-histories.module';
+import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -53,6 +54,7 @@ import { UserViewHistoriesModule } from './user-view-histories/user-view-histori
     SeedDataModule,
     RedisModule,
     UserViewHistoriesModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
