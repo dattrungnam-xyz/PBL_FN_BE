@@ -389,7 +389,6 @@ export class ProductsService {
       page_size: limit,
       search: search,
     };
-    console.log('call recommend', payload);
     const res = await axios.post(
       `${process.env.RECOMMEND_SERVICE_URL}/recommend`,
       payload,
@@ -567,5 +566,15 @@ export class ProductsService {
       category: listCatefogry[index],
       count: c,
     }));
+  }
+  async getSimilarityProduct(productId: string) {
+    const res = await axios.get(
+      `${process.env.RECOMMEND_SERVICE_URL}/similar-products/${productId}`,
+    );
+    const listId = res.data.similar_products?.map((item: any) => item.id);
+    return this.productRepository.find({
+      where: { id: In(listId) },
+      relations: ['seller', 'reviews', 'orderDetails', 'orderDetails.order'],
+    });
   }
 }

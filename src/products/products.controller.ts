@@ -176,6 +176,11 @@ export class ProductsController {
     );
   }
 
+  @Get('similar/:id')
+  getSimilarityProduct(@Param('id') id: string) {
+    return this.productsService.getSimilarityProduct(id);
+  }
+
   @Get(':id')
   getProductById(@Param('id') id: string) {
     return this.productsService.getProductById(id);
