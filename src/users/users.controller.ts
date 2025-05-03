@@ -168,15 +168,6 @@ export class UsersController {
     });
   }
 
-  @Post('add-view-product')
-  @UseGuards(JwtAuthGuard)
-  async addViewProduct(
-    @Body() addViewProductDTO: AddViewProductDto,
-    @CurrentUser() user: User,
-  ) {
-    return this.usersService.addViewProduct(addViewProductDTO, user.id);
-  }
-
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   async getUser(@Param('id') id: string) {

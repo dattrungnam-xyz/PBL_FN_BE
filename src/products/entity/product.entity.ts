@@ -21,6 +21,7 @@ import { CartItems } from '../../cart-items/entity/cartItems.entity';
 import { OrderDetail } from '../../order-details/entity/orderDetail.entity';
 import { Restocking } from '../../restocking/entity/restocking.entity';
 import { User } from '../../users/entity/user.entity';
+import { UserViewHistory } from '../../user-view-histories/entity/userViewHistory.entity';
 @Entity()
 export class Product {
   constructor(partial?: Partial<Product>) {
@@ -101,9 +102,8 @@ export class Product {
   @OneToMany(() => Restocking, (restocking) => restocking.product)
   restockings: Restocking[];
 
-  @ManyToMany(() => User, (user) => user.viewHistories)
-  @JoinTable()
-  userView: User;
+  @OneToMany(() => UserViewHistory, (userViewHistory) => userViewHistory.product)
+  userViewHistories: UserViewHistory[];
 
   popularity?: number;
 }

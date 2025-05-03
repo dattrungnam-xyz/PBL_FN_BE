@@ -238,11 +238,15 @@ export class ProductsService {
           where: {
             id: userId,
           },
-          relations: ['searchHistories', 'viewHistories'],
+          relations: [
+            'searchHistories',
+            'userViewHistories',
+            'userViewHistories.product',
+          ],
         })
       : null;
     if (
-      !user?.viewHistories?.length &&
+      !user?.userViewHistories?.length &&
       !user?.searchHistories?.length &&
       !search &&
       !viewHistory &&
@@ -258,7 +262,6 @@ export class ProductsService {
         provinces,
       });
     }
-    console.log('user', user);
     if (user) {
       return this.getRecommendProducts({
         search,
@@ -266,8 +269,12 @@ export class ProductsService {
         limit,
         page,
         provinces,
-        searchHistory: user?.searchHistories?.map((item) => item.search),
-        viewHistory: user?.viewHistories?.map((item) => item.id),
+        searchHistory: [
+          ...new Set(user?.searchHistories?.map((item) => item.search)),
+        ],
+        viewHistory: [
+          ...new Set(user?.userViewHistories?.map((item) => item.product.id)),
+        ],
         minPrice,
         maxPrice,
       });

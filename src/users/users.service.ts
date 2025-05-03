@@ -18,7 +18,7 @@ import { paginate } from '../pagination/paginator';
 import { AddViewProductDto } from './input/addViewProduct.dto';
 import { Product } from '../products/entity/product.entity';
 import { CreateViewHistoryDTO } from './input/createViewHistory.dto';
-
+import { UserViewHistory } from '../user-view-histories/entity/userViewHistory.entity';
 @Injectable()
 export class UsersService {
   constructor(
@@ -26,6 +26,8 @@ export class UsersService {
     private readonly cloudinaryService: CloudinaryService,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(UserViewHistory)
+    private readonly userViewHistoryRepository: Repository<UserViewHistory>,
   ) {}
 
   async updateProfile(user: User, updateProfileDTO: UpdateProfileDTO) {
@@ -304,68 +306,61 @@ export class UsersService {
     });
   }
 
-  async addViewProduct(addViewProductDTO: AddViewProductDto, userId: string) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['viewHistories'],
-    });
-    const product = await this.productRepository.findOneBy({
-      id: addViewProductDTO.productId,
-    });
-    if (!user || !product) {
-      throw new NotFoundException('User or product not found');
-    }
-    if (user.viewHistories.some((view) => view.id === product.id)) {
-      return;
-    }
-    user.viewHistories.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-    if (user.viewHistories.length >= 10) {
-      user.viewHistories.shift();
-    }
-    user.viewHistories.push(product);
-
-    return await this.userRepository.save(user);
-  }
-
   async createViewHistory(
     createViewHistoryDTO: CreateViewHistoryDTO,
     userId: string,
   ) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-    });
+    const { productIds } = createViewHistoryDTO;
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
     const products = await this.productRepository.findBy({
-      id: In(createViewHistoryDTO.productIds),
+      id: In(productIds),
     });
-    if (products.length !== createViewHistoryDTO.productIds.length) {
+
+    if (products.length !== productIds.length) {
       throw new NotFoundException('Some products not found');
     }
-    if (!user.viewHistories) {
-      user.viewHistories = [];
-    }
-    user.viewHistories.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
+    await this.userViewHistoryRepository.delete({
+      userId,
+      productId: In(productIds),
     });
 
-    const newViewHistories = products.filter((product) => {
-      return !user.viewHistories.some((view) => view.id === product.id);
+    const existingHistories = await this.userViewHistoryRepository.find({
+      where: { userId },
+      order: { createdAt: 'ASC' },
     });
-    user.viewHistories = user.viewHistories.filter((view) => {
-      return !newViewHistories.some((newView) => newView.id === view.id);
-    });
-    while (
-      user.viewHistories.length &&
-      user.viewHistories.length + newViewHistories.length > 10
-    ) {
-      user.viewHistories.shift();
-    }
-    user.viewHistories.push(...newViewHistories);
 
-    return await this.userRepository.save(user);
+    const merged = [
+      ...existingHistories.map((h) => h.productId),
+      ...productIds,
+    ];
+
+    let uniqueLimited = []
+    const set = new Set()
+     for(let i = merged.length - 1; i >= 0; i--) {
+      if(!set.has(merged[i])) {
+        set.add(merged[i])
+        uniqueLimited.unshift(merged[i])
+      }
+     }
+    uniqueLimited = uniqueLimited.slice(-10);
+
+    await this.userViewHistoryRepository.delete({ userId });
+
+    const newHistories = uniqueLimited.map((productId, index) =>
+      this.userViewHistoryRepository.create({
+        userId,
+        productId,
+      }),
+    );
+
+    await this.userViewHistoryRepository.save(newHistories);
+
+    return { message: 'View history updated successfully' };
   }
 }

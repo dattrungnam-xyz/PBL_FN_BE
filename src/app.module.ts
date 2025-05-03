@@ -26,6 +26,7 @@ import { RestockingModule } from './restocking/restocking.module';
 import { SearchHistoryModule } from './search-history/search-history.module';
 import { SeedDataModule } from './seedData/seedData.module';
 import { RedisModule } from './redis/redis.module';
+import { UserViewHistoriesModule } from './user-view-histories/user-view-histories.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -51,6 +52,7 @@ import { RedisModule } from './redis/redis.module';
     SearchHistoryModule,
     SeedDataModule,
     RedisModule,
+    UserViewHistoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
