@@ -577,4 +577,10 @@ export class ProductsService {
       relations: ['seller', 'reviews', 'orderDetails', 'orderDetails.order'],
     });
   }
+  async getFiveStar() {
+    return this.productRepository.find({
+      where: { star: 5 },
+      relations: ['seller', 'reviews', 'orderDetails', 'orderDetails.order'],
+    });
+  }
 }

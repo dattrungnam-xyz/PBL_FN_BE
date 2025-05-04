@@ -248,4 +248,15 @@ export class ReviewsService {
       reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
     );
   }
+  async getTopRecentReviews() {
+    const reviews = await this.reviewRepository.find({
+      where: {
+        rating: MoreThan(4),
+      },
+      order: { createdAt: 'DESC' },
+      take: 20,
+      relations: ['product', 'user', 'orderDetail'],
+    });
+    return reviews;
+  }
 }
