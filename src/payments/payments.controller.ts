@@ -14,6 +14,7 @@ export class PaymentsController {
 
   @Post('zalopay/callback')
   zaloPayCallback(@Body() zaloPayCallbackDTO: ZaloPayCallbackDTO) {
+    console.log("call payment",zaloPayCallbackDTO)
     return this.paymentsService.zaloPayCallback(zaloPayCallbackDTO);
   }
 }
