@@ -108,6 +108,7 @@ export class PaymentsService {
       return_code: 1,
       return_message: 'success',
     };
+    console.log(zaloPayCallbackDTO, "callback")
     try {
       const { data, mac: reqMac } = zaloPayCallbackDTO;
 
@@ -124,6 +125,7 @@ export class PaymentsService {
           where: { transactionId: dataJson['app_trans_id'] },
           relations: ['order'],
         });
+        console.log(payment, "callback")
         if (payment) {
           payment.paymentStatus = PaymentStatusType.PAID;
           await this.paymentRepository.save(payment);
