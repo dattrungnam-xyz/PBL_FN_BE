@@ -88,7 +88,6 @@ export class SellersController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
   getSellerById(@Param('id') id: string) {
     return this.sellersService.getSellerById(id);
   }
