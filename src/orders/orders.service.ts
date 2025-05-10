@@ -369,7 +369,6 @@ export class OrdersService {
     const currentCycleOrders = await this.orderRepository.find({
       where: {
         seller: { id: sellerId },
-        payment: { paymentStatus: PaymentStatusType.PAID },
         createdAt: MoreThan(startDate),
         orderStatus: Not(
           In([
@@ -384,7 +383,6 @@ export class OrdersService {
     const previousCycleOrders = await this.orderRepository.find({
       where: {
         seller: { id: sellerId },
-        payment: { paymentStatus: PaymentStatusType.PAID },
         createdAt: Between(startDatePreviousCycle, startDate),
         orderStatus: Not(
           In([
@@ -597,7 +595,6 @@ export class OrdersService {
     const listCustomer = await this.orderRepository.find({
       where: {
         seller: { id: sellerId },
-        payment: { paymentStatus: PaymentStatusType.PAID },
         orderStatus: Not(
           In([
             OrderStatusType.CANCELLED,
@@ -708,6 +705,71 @@ export class OrdersService {
       };
     });
   }
+
+  async getRevenueFiveDate(sellerId: string) {
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 5);
+
+    const result = await this.orderRepository
+      .createQueryBuilder('order')
+      .select([
+        "DATE_FORMAT(order.createdAt, '%Y-%m-%d') as date",
+        'SUM(order.totalPrice - order.shippingFee) as totalRevenue',
+        'COUNT(order.id) as totalOrders',
+      ])
+      .where('order.seller.id = :sellerId', { sellerId })
+      .andWhere(
+        'order.createdAt >= :startDate AND order.createdAt <= :endDate',
+        {
+          startDate,
+          endDate,
+        },
+      )
+      .andWhere('order.orderStatus NOT IN (:...statuses)', {
+        statuses: [
+          OrderStatusType.CANCELLED,
+          OrderStatusType.REJECTED,
+          OrderStatusType.REFUNDED,
+        ],
+      })
+      .groupBy("DATE_FORMAT(order.createdAt, '%Y-%m-%d')")
+      .orderBy("DATE_FORMAT(order.createdAt, '%Y-%m-%d')", 'ASC')
+      .getRawMany();
+
+    const dates: string[] = [];
+    const now = new Date(endDate);
+    for (let i = 4; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i + 1);
+      dates.push(d.toISOString().slice(0, 10));
+    }
+
+    const resultMap = new Map<
+      string,
+      { totalRevenue: number; totalOrders: number }
+    >();
+    result.forEach((item) => {
+      resultMap.set(item.date, {
+        totalRevenue: Number(item.totalRevenue) || 0,
+        totalOrders: Number(item.totalOrders) || 0,
+      });
+    });
+
+    return dates.map((date) => {
+      const data = resultMap.get(date);
+      return {
+        date,
+        totalRevenue: data?.totalRevenue ?? 0,
+        totalOrders: data?.totalOrders ?? 0,
+        revenuePerCustomer: data?.totalRevenue
+          ? data.totalRevenue / data.totalOrders
+          : 0,
+      };
+    });
+  }
+
 
   async getListOrder(limit: number, page: number) {
     const qb = this.orderRepository.createQueryBuilder('order');

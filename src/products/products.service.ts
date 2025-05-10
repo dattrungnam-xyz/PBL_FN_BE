@@ -441,7 +441,7 @@ export class ProductsService {
         startDate,
       })
       .leftJoin(
-        'review.orderDetail',
+        'product.orderDetails',
         'orderDetail',
         'orderDetail.createdAt >= :startDate',
         {
@@ -454,6 +454,7 @@ export class ProductsService {
       .addSelect('COUNT(review.id)', 'reviewCount')
       .addSelect('COUNT(orderDetail.id)', 'orderDetailCount')
       .orderBy('avgRating', 'DESC')
+      .addOrderBy('orderDetailCount', 'DESC')
       .getRawAndEntities();
 
     return products.entities

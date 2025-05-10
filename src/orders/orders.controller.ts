@@ -202,6 +202,12 @@ export class OrdersController {
     return this.ordersService.getRevenueFiveMonth(user.seller.id);
   }
 
+  @Get('analysis/revenue-five-date')
+  @UseGuards(JwtAuthGuard)
+  async getRevenueFiveDate(@CurrentUser() user: User) {
+    return this.ordersService.getRevenueFiveDate(user.seller.id);
+  }
+
   @Get('analysis/order')
   @UseGuards(JwtAuthGuard)
   async getOrderCount(
