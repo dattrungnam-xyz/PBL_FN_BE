@@ -31,6 +31,7 @@ import { PaymentStatusType } from '../common/type/paymentStatus.type';
 import { getDateCycle } from '../utils/generateDateCycle';
 import { User } from '../users/entity/user.entity';
 import { CategoryType } from '../common/type/category.type';
+import { Cron, CronExpression } from '@nestjs/schedule';
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
 export class OrdersService {
@@ -742,7 +743,11 @@ export class OrdersService {
     const dates: string[] = [];
     const now = new Date(endDate);
     for (let i = 4; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i + 1);
+      const d = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - i + 1,
+      );
       dates.push(d.toISOString().slice(0, 10));
     }
 
@@ -769,7 +774,6 @@ export class OrdersService {
       };
     });
   }
-
 
   async getListOrder(limit: number, page: number) {
     const qb = this.orderRepository.createQueryBuilder('order');
@@ -803,6 +807,36 @@ export class OrdersService {
       },
       relations: ['orderDetails', 'payment', 'address', 'seller', 'user'],
     });
-    return listOrder.reduce((acc, order) => acc + order.totalPrice - order.shippingFee, 0);
+    return listOrder.reduce(
+      (acc, order) => acc + order.totalPrice - order.shippingFee,
+      0,
+    );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  async clearExpiredOrder() {
+    await this.orderRepository.update(
+      {
+        orderStatus: OrderStatusType.PENDING_PAYMENT,
+        createdAt: LessThan(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+      },
+      {
+        orderStatus: OrderStatusType.REJECTED,
+        rejectReason: 'Quá thời gian chưa thanh toán.',
+      },
+    );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  async setReceivedOrder() {
+    await this.orderRepository.update(
+      {
+        orderStatus: OrderStatusType.SHIPPING,
+        createdAt: LessThan(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)),
+      },
+      {
+        orderStatus: OrderStatusType.COMPLETED,
+      },
+    );
   }
 }
