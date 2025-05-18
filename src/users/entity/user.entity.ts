@@ -102,9 +102,6 @@ export class User {
   @OneToMany(() => UserAddress, (userAddress) => userAddress.user)
   addresses: UserAddress[];
 
-  @OneToMany(() => Restocking, (restocking) => restocking.user)
-  restockings: Restocking[];
-
   @OneToMany(() => SearchHistory, (searchHistory) => searchHistory.user)
   searchHistories: SearchHistory[];
 

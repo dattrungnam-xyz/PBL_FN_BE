@@ -6,57 +6,61 @@ import { User } from '../users/entity/user.entity';
 import { Product } from '../products/entity/product.entity';
 import { CategoryType } from '../common/type/category.type';
 import { paginate } from '../pagination/paginator';
+import { Seller } from '../sellers/entity/seller.entity';
 @Injectable()
 export class RestockingService {
   constructor(
     @InjectRepository(Restocking)
     private restockingRepository: Repository<Restocking>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    @InjectRepository(Seller)
+    private sellerRepository: Repository<Seller>,
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
   ) {}
 
   async createRestocking({
-    userId,
+    storeId,
     productId,
     quantity,
   }: {
-    userId: string;
+    storeId: string;
     productId: string;
     quantity: number;
   }) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
+    const seller = await this.sellerRepository.findOne({
+      where: { id: storeId },
     });
     const product = await this.productRepository.findOne({
       where: { id: productId },
     });
     const restocking = new Restocking({
-      user,
+      seller,
       product,
       quantity,
     });
     return this.restockingRepository.save(restocking);
   }
-  async getRestockings({
-    limit,
-    page,
-    search,
-    category,
-    productId,
-  }: {
-    limit: number;
-    page: number;
-    search: string;
-    category: CategoryType;
-    productId: string;
-  }) {
+  async getRestockings(
+    sellerId: string,
+    {
+      limit,
+      page,
+      search,
+      category,
+      productId,
+    }: {
+      limit: number;
+      page: number;
+      search: string;
+      category: CategoryType;
+      productId: string;
+    },
+  ) {
     let qb = this.restockingRepository
       .createQueryBuilder('restocking')
-      .leftJoinAndSelect('restocking.user', 'user')
+      .leftJoinAndSelect('restocking.seller', 'seller')
       .leftJoinAndSelect('restocking.product', 'product')
-      .where('user.deletedAt IS NULL')
+      .where('seller.id = :sellerId', { sellerId })
       .andWhere('product.deletedAt IS NULL')
       .orderBy('restocking.createdAt', 'DESC');
     if (productId) {

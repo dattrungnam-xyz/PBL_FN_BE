@@ -219,6 +219,10 @@ export class ProductsController {
     if (!user.seller) {
       throw new BadRequestException('User is not a seller');
     }
-    return this.productsService.addProductQuantity(id, body.quantity, user.id);
+    return this.productsService.addProductQuantity(
+      id,
+      body.quantity,
+      user.storeId,
+    );
   }
 }

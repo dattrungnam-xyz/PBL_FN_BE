@@ -11,6 +11,7 @@ import {
 import { Paginated } from '../../pagination/paginator';
 import { Product } from '../../products/entity/product.entity';
 import { User } from '../../users/entity/user.entity';
+import { Seller } from '../../sellers/entity/seller.entity';
 
 @Entity()
 export class Restocking {
@@ -34,8 +35,8 @@ export class Restocking {
   @DeleteDateColumn({ nullable: true })
   deletedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.restockings)
-  user: User;
+  @ManyToOne(() => Seller, (seller) => seller.restockings)
+  seller: Seller;
 
   @ManyToOne(() => Product, (product) => product.restockings)
   product: Product;

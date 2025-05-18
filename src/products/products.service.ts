@@ -509,14 +509,14 @@ export class ProductsService {
       .slice(0, 5);
   }
 
-  async addProductQuantity(id: string, quantity: number, userId: string) {
+  async addProductQuantity(id: string, quantity: number, storeId: string) {
     const product = await this.getProductById(id);
     if (!product) {
       throw new NotFoundException('Product not found');
     }
     product.quantity += quantity;
     this.restockingService.createRestocking({
-      userId,
+      storeId,
       productId: product.id,
       quantity,
     });
