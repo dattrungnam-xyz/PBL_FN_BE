@@ -20,6 +20,7 @@ export class ChatService {
     const { id_product, message } = response.data;
     const products = await this.productRepository.find({
       where: { id: In(id_product) },
+      relations: ['reviews', 'orderDetails'],
     });
     return {
       products: products,
