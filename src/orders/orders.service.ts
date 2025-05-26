@@ -32,6 +32,7 @@ import { getDateCycle } from '../utils/generateDateCycle';
 import { User } from '../users/entity/user.entity';
 import { CategoryType } from '../common/type/category.type';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { PaymentMethodType } from '../common/type/paymentMethod.type';
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
 export class OrdersService {
@@ -52,7 +53,11 @@ export class OrdersService {
   async createOrder(userId: string, createOrderDTO: CreateOrderDTO) {
     const order = new Order();
     order.totalPrice = createOrderDTO.totalPrice;
-    order.orderStatus = OrderStatusType.PENDING_PAYMENT;
+    if (createOrderDTO.paymentMethod === PaymentMethodType.CASH_ON_DELIVERY) {
+      order.orderStatus = OrderStatusType.PENDING;
+    } else {
+      order.orderStatus = OrderStatusType.PENDING_PAYMENT;
+    }
     order.shippingFee = createOrderDTO.shippingFee;
     order.note = createOrderDTO.note;
     const user = await this.userService.findOneById(userId);
