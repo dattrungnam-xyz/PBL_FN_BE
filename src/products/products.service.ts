@@ -165,6 +165,8 @@ export class ProductsService {
     let qb = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.seller', 'seller')
+      .leftJoinAndSelect('product.orderDetails', 'orderDetail')
+      .leftJoinAndSelect('product.reviews', 'review')
       .where('seller.deletedAt IS NULL')
       .andWhere('product.deletedAt IS NULL')
       .orderBy('product.createdAt', 'DESC');
