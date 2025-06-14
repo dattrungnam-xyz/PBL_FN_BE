@@ -28,6 +28,7 @@ import { SeedDataModule } from './seedData/seedData.module';
 import { RedisModule } from './redis/redis.module';
 import { UserViewHistoriesModule } from './user-view-histories/user-view-histories.module';
 import { ChatModule } from './chat/chat.module';
+import { LocationModule } from './location/location.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -55,6 +56,7 @@ import { ChatModule } from './chat/chat.module';
     RedisModule,
     UserViewHistoriesModule,
     ChatModule,
+    LocationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -169,6 +169,9 @@ export class ProductsService {
       .leftJoinAndSelect('product.reviews', 'review')
       .where('seller.deletedAt IS NULL')
       .andWhere('product.deletedAt IS NULL')
+      .andWhere('product.status = :status', {
+        status: SellProductType.SELLING,
+      })
       .orderBy('product.createdAt', 'DESC');
     if (id) {
       qb = qb.andWhere('seller.id = :id', { id });
@@ -321,6 +324,9 @@ export class ProductsService {
       .leftJoin('orderDetail.order', 'order')
       .where('seller.deletedAt IS NULL')
       .andWhere('product.deletedAt IS NULL')
+      .andWhere('product.status = :status', {
+        status: SellProductType.SELLING,
+      })
       .addSelect(
         `SUM(CASE WHEN \`order\`.\`orderStatus\` NOT IN (:...excludedStatuses) THEN \`orderDetail\`.\`quantity\` ELSE 0 END)`,
         'soldCount',
@@ -582,7 +588,7 @@ export class ProductsService {
   }
   async getFiveStar() {
     return this.productRepository.find({
-      where: { star: 5 },
+      where: { star: 5, status: SellProductType.SELLING },
       relations: ['seller', 'reviews', 'orderDetails', 'orderDetails.order'],
     });
   }
