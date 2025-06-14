@@ -169,9 +169,6 @@ export class ProductsService {
       .leftJoinAndSelect('product.reviews', 'review')
       .where('seller.deletedAt IS NULL')
       .andWhere('product.deletedAt IS NULL')
-      .andWhere('product.status = :status', {
-        status: SellProductType.SELLING,
-      })
       .orderBy('product.createdAt', 'DESC');
     if (id) {
       qb = qb.andWhere('seller.id = :id', { id });
