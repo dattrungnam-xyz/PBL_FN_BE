@@ -15,7 +15,9 @@ export class UserAddressService {
   ) {}
 
   async getUserAddresses(userId: string) {
-    return this.userAddressRepository.find({ where: { user: { id: userId } } });
+    return this.userAddressRepository.find({
+      where: { user: { id: userId }, isActive: true },
+    });
   }
 
   async createUserAddress(userId: string, body: CreateUserAddressDTO) {
@@ -53,7 +55,8 @@ export class UserAddressService {
     if (!userAddress) {
       throw new NotFoundException('User address not found');
     }
-    return this.userAddressRepository.softDelete(userAddress.id);
+    userAddress.isActive = false;
+    return this.userAddressRepository.save(userAddress);
   }
 
   async getUserAddress(userId: string, id: string) {

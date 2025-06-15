@@ -44,6 +44,10 @@ export class UserAddress {
   isDefault: boolean;
 
   @Expose()
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Expose()
   @Column({ type: 'longtext', nullable: true })
   address: string;
 
