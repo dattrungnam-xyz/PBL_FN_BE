@@ -86,6 +86,9 @@ export class Order {
 
   @ManyToOne(() => UserAddress, (address) => address.orders)
   address: UserAddress;
+
+  @Column({ nullable: true })
+  shippingDate: Date;
 }
 
 export class PaginatedOrder extends Paginated<Order>(Order) {}

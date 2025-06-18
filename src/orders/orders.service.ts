@@ -219,7 +219,10 @@ export class OrdersService {
         'Cannot refund order that is not completed or shipping',
       );
     }
-
+    if(updateOrderStatusDTO.status === OrderStatusType.SHIPPING)
+    {
+      order.shippingDate = new Date(Date.now())
+    }
     order.orderStatus = updateOrderStatusDTO.status;
     return this.orderRepository.save(order);
   }
@@ -248,6 +251,10 @@ export class OrdersService {
             'Cannot refund order that is not completed or shipping',
           );
         }
+      }
+      if(updateOrdersStatusDTO.status === OrderStatusType.SHIPPING)
+      {
+        order.shippingDate = new Date(Date.now())
       }
       order.orderStatus = updateOrdersStatusDTO.status;
     });
@@ -837,7 +844,7 @@ export class OrdersService {
     await this.orderRepository.update(
       {
         orderStatus: OrderStatusType.SHIPPING,
-        createdAt: LessThan(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)),
+        shippingDate: LessThan(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)),
       },
       {
         orderStatus: OrderStatusType.COMPLETED,
