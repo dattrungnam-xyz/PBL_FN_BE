@@ -311,7 +311,7 @@ export class ProductsService {
     maxPrice?: string;
     provinces?: string[];
   }) {
-    console.log('call popularity');
+    console.log('call popularity', search, categories, minPrice, maxPrice, provinces);
 
     const qb = this.productRepository
       .createQueryBuilder('product')
@@ -398,7 +398,7 @@ export class ProductsService {
       `${process.env.RECOMMEND_SERVICE_URL}/recommend`,
       payload,
     );
-
+    console.log("rcm payload", payload)
     const res_page = res.data.page;
     const res_total = res.data.total;
     const res_page_size = res.data.page_size;
