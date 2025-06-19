@@ -19,6 +19,17 @@ export class SearchHistoryService {
       });
       await this.searchHistoryRepository.save(searchHistory);
     }
+    const allHistories = await this.searchHistoryRepository.find({
+      where: { user: { id: userId } },
+      order: { createdAt: 'DESC' },
+    });
+
+    if (allHistories.length > 10) {
+      const historiesToDelete = allHistories.slice(10);
+      const idsToDelete = historiesToDelete.map((h) => h.id);
+      await this.searchHistoryRepository.delete(idsToDelete);
+    }
+
     return {
       message: 'Search history created successfully',
     };

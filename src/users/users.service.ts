@@ -321,10 +321,6 @@ export class UsersService {
       id: In(productIds),
     });
 
-    if (products.length !== productIds.length) {
-      throw new NotFoundException('Some products not found');
-    }
-
     await this.userViewHistoryRepository.delete({
       userId,
       productId: In(productIds),

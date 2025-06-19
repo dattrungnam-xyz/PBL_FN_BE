@@ -132,7 +132,6 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-    await this.redisService.publish('product.deleted', { id: id });
     return product;
   }
 
