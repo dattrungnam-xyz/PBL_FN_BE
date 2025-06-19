@@ -142,6 +142,17 @@ export class PaymentsService {
     }
     return result;
   }
+
+  async updatePaymentByOrderId(orderId: string, paymentStatus: PaymentStatusType) {
+    const payment = await this.paymentRepository.findOne({
+      where: { order: { id: orderId } },
+    });
+    if(!payment) {
+      throw new BadRequestException('Payment not found');
+    }
+    payment.paymentStatus = paymentStatus;
+    await this.paymentRepository.save(payment);
+  }
 }
 
 /*

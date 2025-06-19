@@ -223,6 +223,10 @@ export class OrdersService {
     {
       order.shippingDate = new Date(Date.now())
     }
+    if(updateOrderStatusDTO.status === OrderStatusType.COMPLETED)
+    {
+      await this.paymentService.updatePaymentByOrderId(order.id, PaymentStatusType.PAID)
+    }
     order.orderStatus = updateOrderStatusDTO.status;
     return this.orderRepository.save(order);
   }
