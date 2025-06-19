@@ -113,7 +113,7 @@ export class ProductsService {
       event: 'delete',
     };
     await this.redisService.publish('product-events', payload);
-    const result = await this.productRepository.softDelete(id);
+    return await this.productRepository.softDelete(id);
   }
 
   async getProductById(id: string) {
