@@ -85,6 +85,7 @@ export class ProductsController {
     @Query('userId') userId?: string,
     @Query('searchHistory') searchHistory?: string,
     @Query('viewHistory') viewHistory?: string,
+    @Query('ocopStars') ocopStars?: string,
   ) {
     const provincesArray = provinces ? provinces.split(',') : undefined;
     const searchHistoryArray = searchHistory
@@ -94,6 +95,7 @@ export class ProductsController {
     const categoriesArray = categories
       ? (categories.split(',') as CategoryType[])
       : undefined;
+    const ocopStarsArray = ocopStars ? ocopStars.split(',') : undefined;
     return this.productsService.getAllProducts({
       limit,
       page,
@@ -105,6 +107,7 @@ export class ProductsController {
       userId,
       searchHistory: searchHistoryArray,
       viewHistory: viewHistoryArray,
+      ocopStars: ocopStarsArray,
     });
   }
 

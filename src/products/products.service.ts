@@ -204,6 +204,7 @@ export class ProductsService {
     userId,
     searchHistory,
     viewHistory,
+    ocopStars,
   }: {
     search?: string;
     categories?: CategoryType[];
@@ -215,6 +216,7 @@ export class ProductsService {
     userId?: string;
     searchHistory?: string[];
     viewHistory?: string[];
+    ocopStars?: string[];
   }) {
     console.log(
       'call getAllProducts',
@@ -232,6 +234,7 @@ export class ProductsService {
         minPrice,
         maxPrice,
         provinces,
+        ocopStars,
       });
     }
     const user = userId
@@ -261,6 +264,7 @@ export class ProductsService {
         minPrice,
         maxPrice,
         provinces,
+        ocopStars,
       });
     }
     if (user) {
@@ -278,6 +282,7 @@ export class ProductsService {
         ],
         minPrice,
         maxPrice,
+        ocopStars,
       });
     }
     return this.getRecommendProducts({
@@ -290,6 +295,7 @@ export class ProductsService {
       viewHistory,
       minPrice,
       maxPrice,
+      ocopStars,
     });
   }
 
@@ -301,6 +307,7 @@ export class ProductsService {
     minPrice,
     maxPrice,
     provinces,
+    ocopStars,
   }: {
     search?: string;
     categories?: CategoryType[];
@@ -309,8 +316,9 @@ export class ProductsService {
     minPrice?: string;
     maxPrice?: string;
     provinces?: string[];
+    ocopStars?: string[];
   }) {
-    console.log('call popularity', search, categories, minPrice, maxPrice, provinces);
+    console.log('call popularity', search, categories, minPrice, maxPrice, provinces, ocopStars);
 
     const qb = this.productRepository
       .createQueryBuilder('product')
@@ -352,6 +360,10 @@ export class ProductsService {
     if (provinces) {
       qb.andWhere('seller.province IN (:...provinces)', { provinces });
     }
+    if (ocopStars) {
+      const intOcopStars = ocopStars.map((item) => parseInt(item));
+      qb.andWhere('product.star IN (:...ocopStars)', { ocopStars: intOcopStars });
+    }
 
     return await paginate<Product, PaginatedProduct>(qb, PaginatedProduct, {
       limit,
@@ -371,6 +383,7 @@ export class ProductsService {
     viewHistory,
     minPrice,
     maxPrice,
+    ocopStars,
   }: {
     search?: string;
     categories?: CategoryType[];
@@ -381,6 +394,7 @@ export class ProductsService {
     maxPrice?: string;
     searchHistory?: string[];
     viewHistory?: string[];
+    ocopStars?: string[];
   }) {
     const payload = {
       search_history: !search ? searchHistory : [],
@@ -392,6 +406,7 @@ export class ProductsService {
       page: page,
       page_size: limit,
       search: search,
+      ocop_stars: ocopStars,
     };
     const res = await axios.post(
       `${process.env.RECOMMEND_SERVICE_URL}/recommend`,
